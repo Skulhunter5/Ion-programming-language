@@ -57,7 +57,7 @@ public class Lexer {
         return new Token(TokenType.IDENTIFIER, value);
     }
 
-    private Token parseNumber() {
+    private Token parseNumber() { // TODO: rework exception handling for multiple dots
         String value = "";
         byte dotCount = 0;
         while(Utils.isDigit(c) || c == '.') {
