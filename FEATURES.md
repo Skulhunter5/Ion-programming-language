@@ -22,7 +22,7 @@
 * compiler-options
 * includes
 * dynamic memory allocation
-* operator overload
+* operator overloading
 
 # Implemented internally:
 * variables
