@@ -36,6 +36,10 @@ public class Lexer {
         advance();
         return token;
     }
+    private Token advanceWith(Token token, int n) {
+        advance(n);
+        return token;
+    }
 
     private char peek(int offset) {
         if(i + offset < src_size) return src.charAt(i + offset);
@@ -125,6 +129,9 @@ public class Lexer {
         }
         if(Utils.isDigit(c)) return parseNumber();
         if(c == '"') return parseString();
+
+        if(c == '-' && peek(1) == '-') return advanceWith(new Token(TokenType.DECREMENT, null), 2);
+        else if(c == '+' && peek(1) == '+') return advanceWith(new Token(TokenType.INCREMENT, null), 2);
 
         switch(c) {
             case '=':

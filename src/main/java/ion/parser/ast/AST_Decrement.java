@@ -2,17 +2,17 @@ package ion.parser.ast;
 
 import ion.parser.ASTType;
 
-public class AST_Print extends AST_Expression { // TODO: make print a statement instead of an expression
+public class AST_Decrement extends AST_Expression {
 
     private String identifier;
 
-    public AST_Print(String identifier) {
-        super(ASTType.PRINT);
+    public AST_Decrement(String identifier) {
+        super(ASTType.DECREMENT);
 
         this.identifier = identifier;
     }
 
-    // Getters
+    // Getters and Setters
     public String getIdentifier() {return identifier;}
 
     // Print

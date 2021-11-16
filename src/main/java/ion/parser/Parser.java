@@ -9,9 +9,9 @@ import java.util.ArrayList;
 
 public class Parser {
 
-    private Lexer lexer;
+    private final Lexer lexer;
     private Token token;
-    private ArrayList<Token> peekTokens;
+    private final ArrayList<Token> peekTokens;
 
     public AST_Block root; // TODO: implement functions and change root from block to declarationSpace
     public ArrayList<Variable> variables;
@@ -94,6 +94,13 @@ public class Parser {
                     elseBlock = parseBlock(false);
                 }
                 return new AST_Statement_If(condition, ifBlock, elseBlock);
+            } else if(token.getValue().equals("while")) {
+                eat(); // TokenType.KEYWORD "while"
+                eat(TokenType.LPAREN);
+                AST_Expression condition = parseExpression();
+                eat(TokenType.RPAREN);
+                AST_Block block = parseBlock(false);
+                return new AST_Statement_While(condition, block);
             } else {
                 System.err.println("[Parser]: Invalid keyword: " + token.getValue());
                 System.exit(1);
@@ -157,6 +164,12 @@ public class Parser {
                     case ASSIGN: // TODO: add capability of declaration inside of a condition
                         eat(); // TokenType.ASSIGN
                         return new AST_Assignment(val1, parseExpression());
+                    case DECREMENT: // TODO: add capability for decrement before and after
+                        eat();
+                        return new AST_Decrement(val1);
+                    case INCREMENT: // TODO: add capability for increment before and after
+                        eat();
+                        return new AST_Increment(val1);
                     default:
                         System.err.println("[Parser]: Unexpected token: " + token.getType());
                         System.exit(1);
@@ -175,7 +188,13 @@ public class Parser {
     }
 
     private AST_Expression registerVariable(String type, String identifier, AST_Expression startValue) { // Remove AST_VariableDeclaration
-        variables.add(new Variable(type, identifier));
+        byte bytesize = 0;
+        if(type.equals("uint64")) bytesize = 8;
+        else {
+            System.err.println("[Parser] Unknown bytesize.");
+            System.exit(1);
+        }
+        variables.add(new Variable(type, bytesize, identifier)); // TODO
         if(startValue == null) return null;
         return new AST_Assignment(identifier, startValue);
     }

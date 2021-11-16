@@ -8,6 +8,7 @@ public class AST_Variable extends AST_Expression {
 
     public AST_Variable(String identifier) {
         super(ASTType.VARIABLE);
+
         this.identifier = identifier;
     }
 

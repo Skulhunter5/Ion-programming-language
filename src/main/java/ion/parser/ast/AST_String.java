@@ -6,12 +6,13 @@ public class AST_String extends AST_Expression {
 
     private static int nextId = 0;
 
-    private String value;
     private int id;
+    private String value;
 
     public AST_String(String value) {
         super(ASTType.STRING);
         this.id = AST_String.nextId++;
+
         this.value = value;
     }
 
