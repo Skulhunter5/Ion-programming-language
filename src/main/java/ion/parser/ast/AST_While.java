@@ -28,7 +28,7 @@ public class AST_While extends AST_Statement {
     // Print
     @Override
     public String toString() {
-        return "<AST-" + type + " condition='" + condition + "' block='" + block + "'>";
+        return super.toString() + " condition=" + condition + " block=" + block + ">";
     }
 
 }

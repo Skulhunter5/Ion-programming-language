@@ -14,4 +14,10 @@ public abstract class AST_Expression extends AST {
 
     // Getters and Setters
     public ExpressionType getExpressionType() {return expressionType;}
+
+    @Override
+    public String toString() {
+        return super.toString() + "-" + expressionType;
+    }
+
 }

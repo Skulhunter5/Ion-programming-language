@@ -16,7 +16,7 @@ public class AST {
 
     @Override
     public String toString() {
-        return "<AST type='" + type + "'>";
+        return "<AST-" + type;
     }
 
 }

@@ -12,7 +12,7 @@ public class Lexer {
     private int i;
     private char c;
 
-    private static final List<String> KEYWORDS = Arrays.asList(new String[] {"if", "else", "while", "do", "for", "switch", "case", "continue", "break", "default"});
+    private static final List<String> KEYWORDS = Arrays.asList("if", "else", "while", "do", "print");
 
     public Lexer(String src) {
         this.src = src;

@@ -1,25 +1,26 @@
 package ion.parser.ast;
 
+import ion.parser.AST_Expression;
 import ion.parser.AST_Statement;
 import ion.parser.StatementType;
 
 public class AST_Print extends AST_Statement { // TODO: make print a statement instead of an expression
 
-    private String identifier;
+    private AST_Expression expression;
 
-    public AST_Print(String identifier) {
+    public AST_Print(AST_Expression expression) {
         super(StatementType.PRINT);
 
-        this.identifier = identifier;
+        this.expression = expression;
     }
 
     // Getters
-    public String getIdentifier() {return identifier;}
+    public AST_Expression getExpression() {return expression;}
 
     // Print
     @Override
     public String toString() {
-        return "<AST-" + type + " identifier='" + identifier + "'>";
+        return super.toString() + " expression='" + expression + "'>";
     }
 
 }

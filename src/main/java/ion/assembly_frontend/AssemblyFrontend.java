@@ -117,47 +117,65 @@ public class AssemblyFrontend {
 
     private void generateExpression(AST_Expression expression) {
         switch(expression.getExpressionType()) {
-            case DECREMENT -> { // Mark: might not work correctly
-                AST_Decrement ast = (AST_Decrement) expression;
-                Variable var = getVariable(ast.getIdentifier());
-                String opSize = operationSizes.get(var.getBytesize());
-                if(ast.isAfter()) {
-                    asm += String.format("    mov rax, %s [var_%d]\n", opSize, var.getId());
-                    asm += String.format("    dec %s [var_%d]\n", opSize, var.getId());
-                } else {
-                    asm += String.format("    dec %s [var_%d]\n", opSize, var.getId());
-                    asm += String.format("    mov rax, %s [var_%d]\n", opSize, var.getId());
+            case INTEGER -> {
+                AST_Integer ast = (AST_Integer) expression;
+                asm += String.format("    mov %s, %d\n", "rax", ast.getValue());
+            }
+            case COMPARISON -> {
+                AST_Comparison ast = (AST_Comparison) expression;
+                generateExpression(ast.getA());
+                asm += "    push rax\n";
+                generateExpression(ast.getB());
+                // Mark: look for a better way to compare in assembly
+                asm += """
+                            pop rbx
+                            cmp rbx, rax
+                            mov rax, 0
+                        """;
+                switch(ast.getCompareType()) { // Mark: difference in setae<->setge and similar things
+                    case EQ -> asm += "    sete al\n";
+                    case NEQ -> asm += "    setne al\n";
+                    case LT -> asm += "    setb al\n";
+                    case GT -> asm += "    seta al\n";
+                    case LTEQ -> asm += "    setbe al\n";
+                    case GTEQ -> asm += "    setae al\n";
+                    default -> {
+                        System.err.println("[AssemblyFrontend] Invalid compareType of AST_Comparison.");
+                        System.exit(1);
+                    }
                 }
             }
-            case INCREMENT -> { // Mark: might not work correctly
+            case DECREMENT -> {
+                AST_Decrement ast = (AST_Decrement) expression;
+                Variable var = getVariable(ast.getIdentifier());
+                String reg = getSizedRegister("rax", var.getBytesize());
+                String opSize = operationSizes.get(var.getBytesize());
+                if(var.getBytesize() < 8) asm += "    xor rax, rax\n";
+                if(ast.isBefore()) asm += String.format("    dec %s [var_%d]\n", opSize, var.getId());
+                asm += String.format("    mov %s, %s [var_%d]\n", reg, opSize, var.getId());
+                if(ast.isAfter()) asm += String.format("    dec %s [var_%d]\n", opSize, var.getId());
+            }
+            case INCREMENT -> {
                 AST_Increment ast = (AST_Increment) expression;
                 Variable var = getVariable(ast.getIdentifier());
-                String reg = getSmallerRegister("rax", var.getBytesize());
+                String reg = getSizedRegister("rax", var.getBytesize());
                 String opSize = operationSizes.get(var.getBytesize());
-                if(ast.isAfter()) {
-                    if(var.getBytesize() < 8) asm += "    xor rax, rax\n";
-                    asm += String.format("    mov %s, %s [var_%d]\n", reg, opSize, var.getId());
-                    asm += String.format("    inc %s [var_%d]\n", opSize, var.getId());
-                } else {
-                    if(var.getBytesize() < 8) asm += "    xor rax, rax\n";
-                    asm += String.format("    inc %s [var_%d]\n", opSize, var.getId());
-                    asm += String.format("    mov %s, %s [var_%d]\n", reg, opSize, var.getId());
-                }
+                if(var.getBytesize() < 8) asm += "    xor rax, rax\n";
+                if(ast.isBefore()) asm += String.format("    inc %s [var_%d]\n", opSize, var.getId());
+                asm += String.format("    mov %s, %s [var_%d]\n", reg, opSize, var.getId());
+                if(ast.isAfter()) asm += String.format("    inc %s [var_%d]\n", opSize, var.getId());
             }
             case ASSIGNMENT -> { // TODO: make bytesize variable
                 AST_Assignment ast = (AST_Assignment) expression;
-                AST_Expression value = ast.getValue();
-                if(value.getExpressionType() == ExpressionType.INTEGER) {
-                    AST_Integer integer = (AST_Integer) value;
-                    Variable var = getVariable(ast.getIdentifier());
-                    asm += String.format("    mov %s [var_%d], %d\n", operationSizes.get(var.getBytesize()), var.getId(), integer.getValue());
-                }
+                Variable var = getVariable(ast.getIdentifier());
+                generateExpression(ast.getValue());
+                asm += String.format("    mov %s [var_%d], %s\n", operationSizes.get(var.getBytesize()), var.getId(), getSizedRegister("rax", var.getBytesize()));
             }
             case VARIABLE_ACCESS -> {
                 AST_Variable ast = (AST_Variable) expression;
                 Variable var = getVariable(ast.getIdentifier());
                 if(var.getBytesize() < 8) asm += "    xor rax, rax\n";
-                asm += String.format("    mov %s, %s [var_%d]\n", getSmallerRegister("rax", var.getBytesize()), operationSizes.get(var.getBytesize()), var.getId());
+                asm += String.format("    mov %s, %s [var_%d]\n", getSizedRegister("rax", var.getBytesize()), operationSizes.get(var.getBytesize()), var.getId());
             }
             default -> {
                 System.err.println("[AssemblyFrontend] Unimplemented expression.");
@@ -200,10 +218,11 @@ public class AssemblyFrontend {
             }
             case PRINT -> { // TODO: make bytesize variable
                 AST_Print ast = (AST_Print) statement;
-                Variable var = getVariable(ast.getIdentifier());
-                if(var.getBytesize() < 8) asm += "    xor rdi, rdi\n";
-                asm += String.format("    mov %s, %s [var_%d]\n", getSmallerRegister("rdi", var.getBytesize()), operationSizes.get(var.getBytesize()), var.getId());
-                asm += "    call print\n";
+                generateExpression(ast.getExpression());
+                asm += """
+                            mov rdi, rax
+                            call print
+                        """;
             }
             default -> {
                 System.err.println("[AssemblyFrontend] Unimplemented statement.");
@@ -238,17 +257,28 @@ public class AssemblyFrontend {
         return String.join(",", parts);
     }
 
-    private String getSmallerRegister(String reg, byte bytesize) {
+    private String getSizedRegister(String reg, byte bytesize) {
         if(reg.equals("rax")) {
             if(bytesize == 1) return "al";
             else if(bytesize == 2) return "ax";
             else if(bytesize == 4) return "eax";
-        } else if(reg.equals("rdi")) {
-            if(bytesize == 2) return "di";
-            else if(bytesize == 4) return "edi";
+            else if(bytesize == 8) return "rax";
+        } else if(reg.equals("rbx")) {
+            if(bytesize == 1) return "bl";
+            else if(bytesize == 4) return "ebx";
+            else if(bytesize == 8) return "rbx";
+        } else if(reg.equals("rcx")) {
+            if(bytesize == 1) return "cl";
+            else if(bytesize == 4) return "ecx";
+            else if(bytesize == 8) return "rcx";
         } else if(reg.equals("rdx")) {
             if(bytesize == 1) return "dl";
             else if(bytesize == 4) return "edx";
+            else if(bytesize == 8) return "rdx";
+        } else if(reg.equals("rdi")) {
+            if(bytesize == 2) return "di";
+            else if(bytesize == 4) return "edi";
+            else if(bytesize == 8) return "rdi";
         }
 
         System.err.println("[AssemblyFrontend] Error in getSmallerRegister.");

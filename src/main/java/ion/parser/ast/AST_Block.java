@@ -21,7 +21,7 @@ public class AST_Block extends AST {
     // Print
     @Override
     public String toString() {
-        return "<AST-" + type + " children='" + children + "'>";
+        return super.toString() + " children=" + children + ">";
     }
 
 }

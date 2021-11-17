@@ -22,7 +22,7 @@ public class AST_Assignment extends AST_Expression {
     //Print
     @Override
     public String toString() {
-        return "<AST-" + type + "' identifier='" + identifier + "' value='" + value + "'>";
+        return super.toString() + " identifier='" + identifier + "' value=" + value + ">";
     }
 
 }

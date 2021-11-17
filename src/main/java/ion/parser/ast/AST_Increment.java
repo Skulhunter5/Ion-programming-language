@@ -17,12 +17,13 @@ public class AST_Increment extends AST_Expression {
 
     // Getters and Setters
     public String getIdentifier() {return identifier;}
+    public boolean isBefore() {return !after;}
     public boolean isAfter() {return after;}
 
     // Print
     @Override
     public String toString() {
-        return "<AST-" + type + " identifier='" + identifier + "'>";
+        return super.toString() + " identifier='" + identifier + "'>";
     }
 
 }

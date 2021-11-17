@@ -104,8 +104,7 @@ public class Parser {
             } else if(token.getValue().equals("do")) {
                 eat(); // TokenType.KEYWORD "do"
                 AST_Block block = parseBlock(false);
-                String val = token.getValue();
-                eat(TokenType.KEYWORD);
+                String val = eat(TokenType.KEYWORD).getValue();
                 if(!val.equals("while")) {
                     System.err.println("[Parser] Unexpected keyword: '" + val + "'");
                     System.exit(1);
@@ -115,20 +114,16 @@ public class Parser {
                 eat(TokenType.RPAREN);
                 eat(TokenType.SEMICOLON);
                 return new AST_DoWhile(condition, block);
+
+            } else if(token.getValue().equals("print")) {
+                eat(); // TokenType.KEYWORD "print"
+                AST_Expression expression = parseExpression();
+                return new AST_Print(expression);
             } else {
                 System.err.println("[Parser]: Invalid keyword: " + token.getValue());
                 System.exit(1);
             }
-        } else {
-            if(token.getType() == TokenType.IDENTIFIER && token.getValue().equals("print")) {
-                eat(); // TokenType.IDENTIFIER
-                String val2 = token.getValue();
-                eat(TokenType.IDENTIFIER);
-                eat(TokenType.SEMICOLON);
-                return new AST_Print(val2);
-            }
-            return parseExpression();
-        }
+        } else return parseExpression();
 
         // Should be unreachable
         System.err.println("[Parser]: Unreachable");
@@ -137,75 +132,75 @@ public class Parser {
     }
 
     private AST_Expression parseExpression() {
+        AST_Expression expression = null;
         switch(token.getType()) {
             case SEMICOLON:
                 eat(); // TokenType.SEMICOLON
-                return null;
+                return null; // Special case
             case INTEGER:
                 // TODO: Implement enough sized unsigned parsing
                 // TODO: Check if there has to be an upper/lower bound safety or implement more
-                return new AST_Integer(Long.parseLong(eat()/*TokenType.INTEGER*/.getValue()));
+                expression = new AST_Integer(Long.parseLong(eat()/*TokenType.INTEGER*/.getValue()));
+                break;
             case FLOAT:
                 // TODO: Check if there has to be an upper/lower bound safety or implement more
-                return new AST_Float(Float.parseFloat(eat()/*TokenType.FLOAT*/.getValue()));
+                expression = new AST_Float(Float.parseFloat(eat()/*TokenType.FLOAT*/.getValue()));
+                break;
             case IDENTIFIER:
                 String val1 = token.getValue();
                 eat(); // TokenType.IDENTIFIER
                 switch(token.getType()) {
-                    case SEMICOLON:
-                        eat(); // TokenType.SEMICOLON
-                    case RPAREN:
-                        return new AST_Variable(val1);
                     case IDENTIFIER:
                         String val2 = token.getValue();
                         eat(); // TokenType.IDENTIFIER
                         switch(token.getType()) { // TODO: implement declaration and assignment of variable in one go
                             case SEMICOLON:
                                 eat(); // TokenType.SEMICOLON
-                                return registerVariable(val1, val2, null);
+                                expression = registerVariable(val1, val2, null);
+                                break;
                             case ASSIGN: // TODO: add capability of declaration inside of a condition
                                 eat(); // TokenType.ASSIGN
-                                AST_Expression expr = registerVariable(val1, val2, parseExpression());
-                                if(token.getType() != TokenType.RPAREN)
-                                    eat(TokenType.SEMICOLON); // Mark: rethink this
-                                return expr;
+                                expression = registerVariable(val1, val2, parseExpression());
+                                break;
                             default:
                                 System.err.println("[Parser]: Unexpected token: " + token.getType());
                                 System.exit(1);
                         }
-
-                        // Should be unreachable
-                        System.err.println("[Parser]: Unreachable");
-                        System.exit(1);
-                        return null; // Unreachable
+                        break;
                     case ASSIGN: // TODO: add capability of declaration inside of a condition
                         eat(); // TokenType.ASSIGN
-                        return new AST_Assignment(val1, parseExpression());
+                        expression = new AST_Assignment(val1, parseExpression());
+                        break;
                     case DECREMENT:
                         eat();
                         if(token.getType() != TokenType.RPAREN)
                             eat(TokenType.SEMICOLON);
-                        return new AST_Decrement(val1, true);
+                        expression = new AST_Decrement(val1, true);
+                        break;
                     case INCREMENT:
                         eat();
                         if(token.getType() != TokenType.RPAREN)
                             eat(TokenType.SEMICOLON);
-                        return new AST_Increment(val1, true);
+                        expression = new AST_Increment(val1, true);
+                        break;
                     default:
-                        System.err.println("[Parser]: Unexpected token: " + token.getType());
-                        System.exit(1);
+                        expression = new AST_Variable(val1);
+                        //                    default:
+                        //                        System.err.println("[Parser]: Unexpected token: " + token.getType());
+                        //                        System.exit(1);
                 }
-                // Temp
                 break;
             case DECREMENT: {
                 eat(); // TokenType.DECREMENT
                 String val = eat(TokenType.IDENTIFIER).getValue();
-                return new AST_Decrement(val, false);
+                expression = new AST_Decrement(val, false);
+                break;
             }
             case INCREMENT: {
                 eat(); // TokenType.INCREMENT
                 String val = eat(TokenType.IDENTIFIER).getValue();
-                return new AST_Increment(val, false);
+                expression = new AST_Increment(val, false);
+                break;
             }
             default:
                 System.err.println("[Parser]: Unexpected token: " + token.getType());
@@ -214,10 +209,30 @@ public class Parser {
 
         // TODO: Idea: Fallthrough full expressions until here and then try to find expression that contain the current expression (also eat RPAREN if necessary, ...)
 
-        // Should be unreachable
-        System.err.println("[Parser]: Unreachable");
-        System.exit(1);
-        return null; // Unreachable
+        if(expression != null) {
+            if(token.getType() == TokenType.SEMICOLON) {
+                eat(); // TokenType.SEMICOLON
+                return expression;
+            }
+
+            TokenType ttype = token.getType();
+            switch(ttype) {
+                case EQ:
+                case NEQ:
+                case GT:
+                case LT:
+                case GTEQ:
+                case LTEQ:
+                    eat(); // some kind of EQ
+                    return new AST_Comparison(expression, parseExpression(), ttype);
+            }
+            return expression;
+        } else return null;
+
+        //        // Should be unreachable
+        //        System.err.println("[Parser]: Unreachable");
+        //        System.exit(1);
+        //        return null; // Unreachable
     }
 
     private AST_Expression registerVariable(String type, String identifier, AST_Expression startValue) { // Remove AST_VariableDeclaration

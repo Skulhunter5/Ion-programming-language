@@ -20,7 +20,7 @@ public class AST_Boolean extends AST_Expression {
     // Print
     @Override
     public String toString() {
-        return "<AST-" + type + " value='" + value + "'>";
+        return super.toString() + " value='" + value + "'>";
     }
 
 }

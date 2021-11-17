@@ -12,4 +12,12 @@ public abstract class AST_Statement extends AST {
     // Getters and Setters
     public StatementType getStatementType() {return statementType;}
 
+    // Print
+
+
+    @Override
+    public String toString() {
+        return super.toString() + "-" + statementType;
+    }
+
 }
