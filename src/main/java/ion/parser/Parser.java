@@ -166,16 +166,26 @@ public class Parser {
                         return new AST_Assignment(val1, parseExpression());
                     case DECREMENT: // TODO: add capability for decrement before and after
                         eat();
-                        return new AST_Decrement(val1);
+                        return new AST_Decrement(val1, true);
                     case INCREMENT: // TODO: add capability for increment before and after
                         eat();
-                        return new AST_Increment(val1);
+                        return new AST_Increment(val1, true);
                     default:
                         System.err.println("[Parser]: Unexpected token: " + token.getType());
                         System.exit(1);
                 }
                 // Temp
                 break;
+            case DECREMENT: {
+                eat(); // TokenType.DECREMENT
+                String val = eat(TokenType.IDENTIFIER).getValue();
+                return new AST_Decrement(val, false);
+            }
+            case INCREMENT: {
+                eat(); // TokenType.INCREMENT
+                String val = eat(TokenType.IDENTIFIER).getValue();
+                return new AST_Increment(val, false);
+            }
             default:
                 System.err.println("[Parser]: Unexpected token: " + token.getType());
                 System.exit(1);

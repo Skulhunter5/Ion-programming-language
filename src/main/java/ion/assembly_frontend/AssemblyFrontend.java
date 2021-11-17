@@ -65,10 +65,10 @@ public class AssemblyFrontend {
                     mov     BYTE [rsp+31], 10
                     lea     rcx, [rsp+30]
                 .L1:
-                    mov     rax, r10
+                    mov     rax, rdi
                     lea     r8, [rsp+32]
                     mul     r9
-                    mov     rax, r10
+                    mov     rax, rdi
                     sub     r8, rcx
                     shr     rdx, 3
                     lea     rsi, [rdx+rdx*4]
@@ -76,8 +76,8 @@ public class AssemblyFrontend {
                     sub     rax, rsi
                     add     eax, 48
                     mov     BYTE [rcx], al
-                    mov     rax, r10
-                    mov     r10, rdx
+                    mov     rax, rdi
+                    mov     rdi, rdx
                     mov     rdx, rcx
                     sub     rcx, 1
                     cmp     rax, 9
@@ -120,15 +120,33 @@ public class AssemblyFrontend {
 
     private void generateExpression(AST_Expression expression) {
         switch(expression.getType()) {
-            case DECREMENT -> {
+            case DECREMENT -> { // Mark: might not work correctly
                 AST_Decrement ast = (AST_Decrement) expression;
                 Variable var = getVariable(ast.getIdentifier());
-                asm += String.format("    mov rax, %s [var_%d]\n", operationSizes.get(var.getBytesize()), var.getId());
-                asm += String.format("    dec %s [var_%d]\n", operationSizes.get(var.getBytesize()), var.getId());
+                String opSize = operationSizes.get(var.getBytesize());
+                if(ast.isAfter()) {
+                    asm += String.format("    mov rax, %s [var_%d]\n", opSize, var.getId());
+                    asm += String.format("    dec %s [var_%d]\n", opSize, var.getId());
+                } else {
+                    asm += String.format("    dec %s [var_%d]\n", opSize, var.getId());
+                    asm += String.format("    mov rax, %s [var_%d]\n", opSize, var.getId());
+                }
+            }
+            case INCREMENT -> { // Mark: might not work correctly
+                AST_Increment ast = (AST_Increment) expression;
+                Variable var = getVariable(ast.getIdentifier());
+                String opSize = operationSizes.get(var.getBytesize());
+                if(ast.isAfter()) {
+                    asm += String.format("    mov rax, %s [var_%d]\n", opSize, var.getId());
+                    asm += String.format("    inc %s [var_%d]\n", opSize, var.getId());
+                } else {
+                    asm += String.format("    inc %s [var_%d]\n", opSize, var.getId());
+                    asm += String.format("    mov rax, %s [var_%d]\n", opSize, var.getId());
+                }
             }
             case PRINT -> { // TODO: make bytesize variable
                 AST_Print ast = (AST_Print) expression;
-                asm += String.format("    mov r10, qword [var_%d]\n", getVariable(ast.getIdentifier()).getId());
+                asm += String.format("    mov rdi, qword [var_%d]\n", getVariable(ast.getIdentifier()).getId());
                 asm += "    call print\n";
             }
             case ASSIGNMENT -> { // TODO: make bytesize variable
@@ -166,7 +184,14 @@ public class AssemblyFrontend {
                 asm += String.format("end_if_%d:\n", ast.getId());
             }
             case STATEMENT_WHILE -> {
-                // TODO
+                AST_Statement_While ast = (AST_Statement_While) statement;
+                asm += String.format("while_%d:\n", ast.getId());
+                generateExpression(ast.getCondition());
+                asm += "    cmp rax, 0\n";
+                asm += String.format("    je end_while_%d\n", ast.getId());
+                generateBlock(ast.getBlock());
+                asm += String.format("    jmp while_%d\n", ast.getId());
+                asm += String.format("end_while_%d:\n", ast.getId());
             }
             default -> {
                 System.err.println("[AssemblyFrontend] Unimplemented statement.");

@@ -24,13 +24,5 @@
 * dynamic memory allocation
 * operator overloading
 
-# Implemented internally:
-* variables
-* statements:
-  * if | else
-
-# Fully working:
-_None_
-
 # Other goals:
 * self hosted
