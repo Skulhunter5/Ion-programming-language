@@ -93,19 +93,42 @@ public class Parser {
                     eat(); // TokenType.KEYWORD "else"
                     elseBlock = parseBlock(false);
                 }
-                return new AST_Statement_If(condition, ifBlock, elseBlock);
+                return new AST_If(condition, ifBlock, elseBlock);
             } else if(token.getValue().equals("while")) {
                 eat(); // TokenType.KEYWORD "while"
                 eat(TokenType.LPAREN);
                 AST_Expression condition = parseExpression();
                 eat(TokenType.RPAREN);
                 AST_Block block = parseBlock(false);
-                return new AST_Statement_While(condition, block);
+                return new AST_While(condition, block);
+            } else if(token.getValue().equals("do")) {
+                eat(); // TokenType.KEYWORD "do"
+                AST_Block block = parseBlock(false);
+                String val = token.getValue();
+                eat(TokenType.KEYWORD);
+                if(!val.equals("while")) {
+                    System.err.println("[Parser] Unexpected keyword: '" + val + "'");
+                    System.exit(1);
+                }
+                eat(TokenType.LPAREN);
+                AST_Expression condition = parseExpression();
+                eat(TokenType.RPAREN);
+                eat(TokenType.SEMICOLON);
+                return new AST_DoWhile(condition, block);
             } else {
                 System.err.println("[Parser]: Invalid keyword: " + token.getValue());
                 System.exit(1);
             }
-        } else return parseExpression();
+        } else {
+            if(token.getType() == TokenType.IDENTIFIER && token.getValue().equals("print")) {
+                eat(); // TokenType.IDENTIFIER
+                String val2 = token.getValue();
+                eat(TokenType.IDENTIFIER);
+                eat(TokenType.SEMICOLON);
+                return new AST_Print(val2);
+            }
+            return parseExpression();
+        }
 
         // Should be unreachable
         System.err.println("[Parser]: Unreachable");
@@ -119,21 +142,15 @@ public class Parser {
                 eat(); // TokenType.SEMICOLON
                 return null;
             case INTEGER:
+                // TODO: Implement enough sized unsigned parsing
                 // TODO: Check if there has to be an upper/lower bound safety or implement more
-                return new AST_Integer(Integer.parseInt(eat()/*TokenType.INTEGER*/.getValue()));
+                return new AST_Integer(Long.parseLong(eat()/*TokenType.INTEGER*/.getValue()));
             case FLOAT:
                 // TODO: Check if there has to be an upper/lower bound safety or implement more
                 return new AST_Float(Float.parseFloat(eat()/*TokenType.FLOAT*/.getValue()));
             case IDENTIFIER:
                 String val1 = token.getValue();
                 eat(); // TokenType.IDENTIFIER
-                // Temp
-                if(val1.equals("print")) {
-                    String val2 = token.getValue();
-                    eat(TokenType.IDENTIFIER);
-                    eat(TokenType.SEMICOLON);
-                    return new AST_Print(val2);
-                }
                 switch(token.getType()) {
                     case SEMICOLON:
                         eat(); // TokenType.SEMICOLON
@@ -164,11 +181,15 @@ public class Parser {
                     case ASSIGN: // TODO: add capability of declaration inside of a condition
                         eat(); // TokenType.ASSIGN
                         return new AST_Assignment(val1, parseExpression());
-                    case DECREMENT: // TODO: add capability for decrement before and after
+                    case DECREMENT:
                         eat();
+                        if(token.getType() != TokenType.RPAREN)
+                            eat(TokenType.SEMICOLON);
                         return new AST_Decrement(val1, true);
-                    case INCREMENT: // TODO: add capability for increment before and after
+                    case INCREMENT:
                         eat();
+                        if(token.getType() != TokenType.RPAREN)
+                            eat(TokenType.SEMICOLON);
                         return new AST_Increment(val1, true);
                     default:
                         System.err.println("[Parser]: Unexpected token: " + token.getType());
@@ -191,6 +212,8 @@ public class Parser {
                 System.exit(1);
         }
 
+        // TODO: Idea: Fallthrough full expressions until here and then try to find expression that contain the current expression (also eat RPAREN if necessary, ...)
+
         // Should be unreachable
         System.err.println("[Parser]: Unreachable");
         System.exit(1);
@@ -200,6 +223,9 @@ public class Parser {
     private AST_Expression registerVariable(String type, String identifier, AST_Expression startValue) { // Remove AST_VariableDeclaration
         byte bytesize = 0;
         if(type.equals("uint64")) bytesize = 8;
+        else if(type.equals("uint32")) bytesize = 4;
+        else if(type.equals("uint16")) bytesize = 2;
+        else if(type.equals("uint8")) bytesize = 1;
         else {
             System.err.println("[Parser] Unknown bytesize.");
             System.exit(1);

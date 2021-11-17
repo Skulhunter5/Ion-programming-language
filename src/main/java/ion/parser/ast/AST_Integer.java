@@ -1,18 +1,19 @@
 package ion.parser.ast;
 
-import ion.parser.ASTType;
+import ion.parser.AST_Expression;
+import ion.parser.ExpressionType;
 
 public class AST_Integer extends AST_Expression {
 
-    private int value;
+    private long value;
 
-    public AST_Integer(int value) {
-        super(ASTType.INTEGER);
+    public AST_Integer(long value) {
+        super(ExpressionType.INTEGER);
         this.value = value;
     }
 
     // Getters
-    public int getValue() {return value;}
+    public long getValue() {return value;}
 
     // Print
     @Override

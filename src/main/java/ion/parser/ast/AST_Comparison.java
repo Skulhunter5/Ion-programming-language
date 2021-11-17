@@ -1,13 +1,14 @@
 package ion.parser.ast;
 
-import ion.parser.ASTType;
+import ion.parser.AST_Expression;
+import ion.parser.ExpressionType;
 
-public class AST_Comparison extends AST_Expression{
+public class AST_Comparison extends AST_Expression {
 
     private AST_Expression a, b;
 
     public AST_Comparison(AST_Expression a, AST_Expression b) {
-        super(ASTType.COMPARISON);
+        super(ExpressionType.COMPARISON);
 
         this.a = a;
         this.b = b;

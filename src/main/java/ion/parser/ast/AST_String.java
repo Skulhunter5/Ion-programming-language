@@ -1,6 +1,7 @@
 package ion.parser.ast;
 
-import ion.parser.ASTType;
+import ion.parser.AST_Expression;
+import ion.parser.ExpressionType;
 
 public class AST_String extends AST_Expression {
 
@@ -10,7 +11,7 @@ public class AST_String extends AST_Expression {
     private String value;
 
     public AST_String(String value) {
-        super(ASTType.STRING);
+        super(ExpressionType.STRING);
         this.id = AST_String.nextId++;
 
         this.value = value;

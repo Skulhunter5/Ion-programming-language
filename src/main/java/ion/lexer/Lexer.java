@@ -12,7 +12,7 @@ public class Lexer {
     private int i;
     private char c;
 
-    private static final List<String> KEYWORDS = Arrays.asList(new String[] {"if", "else", "while", "for", "switch", "case", "continue", "break", "default"});
+    private static final List<String> KEYWORDS = Arrays.asList(new String[] {"if", "else", "while", "do", "for", "switch", "case", "continue", "break", "default"});
 
     public Lexer(String src) {
         this.src = src;
@@ -125,32 +125,30 @@ public class Lexer {
             Token id = parseIdentifier();
 
             if(Lexer.KEYWORDS.contains(id.getValue())) return new Token(TokenType.KEYWORD, id.getValue());
+            else if(id.getValue().equals("true") || id.getValue().equals("false")) return new Token(TokenType.BOOLEAN, id.getValue());
             else return id;
         }
         if(Utils.isDigit(c)) return parseNumber();
         if(c == '"') return parseString();
 
-        if(c == '-' && peek(1) == '-') return advanceWith(new Token(TokenType.DECREMENT, null), 2);
-        else if(c == '+' && peek(1) == '+') return advanceWith(new Token(TokenType.INCREMENT, null), 2);
-
         switch(c) {
             case '=':
                 advance();
                 if(c == '>') return advanceWith(new Token(TokenType.RIGHT_ARROW_DOUBLE, null));
-                else if(c == '=') return advanceWith(new Token(TokenType.EQ, null));
-                else return new Token(TokenType.ASSIGN, null);
+                if(c == '=') return advanceWith(new Token(TokenType.EQ, null));
+                return new Token(TokenType.ASSIGN, null);
             case '<':
                 advance();
                 if(c == '=') return advanceWith(new Token(TokenType.LTEQ, null));
-                else return new Token(TokenType.LT, null);
+                return new Token(TokenType.LT, null);
             case '>':
                 advance();
                 if(c == '=') return advanceWith(new Token(TokenType.GTEQ, null));
-                else return new Token(TokenType.GT, null);
+                return new Token(TokenType.GT, null);
             case '!':
                 advance();
                 if(c == '=') return advanceWith(new Token(TokenType.NEQ, null));
-                else return new Token(TokenType.NOT, null);
+                return new Token(TokenType.NOT, null);
             case ';':
                 return advanceWith(new Token(TokenType.SEMICOLON, null));
             case '(':
@@ -167,11 +165,17 @@ public class Lexer {
                 return advanceWith(new Token(TokenType.RBRACE, null));
             case '-':
                 advance();
+                if(c == '-') return advanceWith(new Token(TokenType.DECREMENT, null));
                 if(c == '>') return advanceWith(new Token(TokenType.RIGHT_ARROW_SINGLE, null));
+                return new Token(TokenType.MINUS, null);
             case '+':
+                advance();
+                if(c == '+') return advanceWith(new Token(TokenType.INCREMENT, null));
+                return advanceWith(new Token(TokenType.PLUS, null));
             case '*':
+                return advanceWith(new Token(TokenType.MULTIPLY, null));
             case '/':
-                parseOperator();
+                return advanceWith(new Token(TokenType.DIVIDE, null));
             case ':':
                 return advanceWith(new Token(TokenType.COLON, null));
             case '.':

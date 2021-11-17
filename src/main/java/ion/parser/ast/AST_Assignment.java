@@ -1,6 +1,7 @@
 package ion.parser.ast;
 
-import ion.parser.ASTType;
+import ion.parser.AST_Expression;
+import ion.parser.ExpressionType;
 
 public class AST_Assignment extends AST_Expression {
 
@@ -8,7 +9,7 @@ public class AST_Assignment extends AST_Expression {
     private AST_Expression value;
 
     public AST_Assignment(String identifier, AST_Expression value) {
-        super(ASTType.ASSIGNMENT);
+        super(ExpressionType.ASSIGNMENT);
         this.identifier = identifier;
         this.value = value;
     }

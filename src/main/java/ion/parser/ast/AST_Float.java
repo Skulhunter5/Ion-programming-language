@@ -1,13 +1,14 @@
 package ion.parser.ast;
 
-import ion.parser.ASTType;
+import ion.parser.AST_Expression;
+import ion.parser.ExpressionType;
 
 public class AST_Float extends AST_Expression {
 
     private float value;
 
     public AST_Float(float value) {
-        super(ASTType.FLOAT);
+        super(ExpressionType.FLOAT);
         this.value = value;
     }
 

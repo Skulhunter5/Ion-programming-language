@@ -1,7 +1,5 @@
 package ion.parser;
 
-import java.util.ArrayList;
-
 public class AST {
 
     protected ASTType type;

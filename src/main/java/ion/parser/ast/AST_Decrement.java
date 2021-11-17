@@ -1,6 +1,7 @@
 package ion.parser.ast;
 
-import ion.parser.ASTType;
+import ion.parser.AST_Expression;
+import ion.parser.ExpressionType;
 
 public class AST_Decrement extends AST_Expression {
 
@@ -8,7 +9,7 @@ public class AST_Decrement extends AST_Expression {
     private boolean after;
 
     public AST_Decrement(String identifier, boolean after) {
-        super(ASTType.DECREMENT);
+        super(ExpressionType.DECREMENT);
 
         this.identifier = identifier;
         this.after = after;

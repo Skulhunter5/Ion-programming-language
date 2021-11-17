@@ -1,1 +1,1 @@
-<AST-BLOCK children='[<AST-ASSIGNMENT' identifier='test' value='<AST-INTEGER value='10'>'>, <AST-STATEMENT_WHILE condition='<AST-VARIABLE' identifier='test'>' block='<AST-BLOCK children='[<AST-PRINT identifier='test'>, <AST-DECREMENT identifier='test'>]'>'>]'>
+<AST-BLOCK children='[<AST-EXPRESSION' identifier='test' value='<AST-EXPRESSION value='65525'>'>, <AST-STATEMENT condition='<AST-EXPRESSION' identifier='test'>' block='<AST-BLOCK children='[<AST-STATEMENT identifier='test'>, <AST-EXPRESSION identifier='test'>]'>'>]'>
