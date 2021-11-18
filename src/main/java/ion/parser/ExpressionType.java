@@ -7,5 +7,6 @@ public enum ExpressionType {
     STRING, INTEGER, FLOAT, BOOLEAN,
     COMPARISON,
     DECREMENT, INCREMENT,
+    NOT,
 
 }

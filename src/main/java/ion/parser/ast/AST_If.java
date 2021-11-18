@@ -31,7 +31,7 @@ public class AST_If extends AST_Statement {
     // Print
     @Override
     public String toString() {
-        return super.toString() + " condition=" + condition + " block_if=" + ifBlock + " block_else=" + elseBlock + ">";
+        return super.toString() + " condition=" + condition + " block_if=" + ifBlock + (elseBlock != null ? " block_else=" + elseBlock : "") + ">";
     }
 
 }

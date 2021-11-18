@@ -57,7 +57,7 @@ public class Parser {
      * Retrieves the token at the given offset
      *
      * @param offset the offset to peek at
-     * @return
+     * @return old token
      */
     private Token peek(int offset) {
         if(offset == 0) return token;
@@ -144,7 +144,7 @@ public class Parser {
                     System.exit(1);
                 }
             }
-        } else return parseExpression(ExpressionEnd.NONE);
+        } else return parseExpression(ExpressionEnd.SEMICOLON);
 
         // Should be unreachable
         System.err.println("[Parser]: Unreachable");
@@ -153,11 +153,16 @@ public class Parser {
     }
 
     private AST_Expression parseExpression(int expressionEnd) {
+        AST_Expression expression = parseExpressionConjunction(null);
+
+        if((expressionEnd & ExpressionEnd.SEMICOLON) > 0) eat(TokenType.SEMICOLON);
+
+        return expression;
+    }
+
+    private AST_Expression parseExpressionParticle() {
         AST_Expression expression = null;
         switch(token.getType()) {
-            case SEMICOLON:
-                eat(); // TokenType.SEMICOLON
-                return null; // Special case
             case INTEGER:
                 // TODO: Implement enough sized unsigned parsing
                 // TODO: Check if there has to be an upper/lower bound safety or implement more
@@ -175,33 +180,30 @@ public class Parser {
                         String val2 = token.getValue();
                         eat(); // TokenType.IDENTIFIER
                         switch(token.getType()) { // TODO: implement declaration and assignment of variable in one go
-                            case SEMICOLON:
-                                eat(); // TokenType.SEMICOLON
-                                expression = registerVariable(val1, val2, null);
-                                break;
+//                            case SEMICOLON:
+//                                eat(); // TokenType.SEMICOLON
+//                                expression = registerVariable(val1, val2, null);
+//                                break;
                             case ASSIGN: // TODO: add capability of declaration/definition inside of a condition
                                 eat(); // TokenType.ASSIGN
-                                expression = registerVariable(val1, val2, parseExpression(ExpressionEnd.SEMICOLON));
+                                expression = registerVariable(val1, val2, parseExpression(0));
                                 break;
                             default:
-                                System.err.println("[Parser]: Unexpected token: " + token.getType());
-                                System.exit(1);
+                                registerVariable(val1, val2, null);
+//                                System.err.println("[Parser]: Unexpected token: " + token.getType());
+//                                System.exit(1);
                         }
                         break;
                     case ASSIGN: // TODO: add capability of declaration/definition inside of a condition
                         eat(); // TokenType.ASSIGN
-                        expression = new AST_Assignment(val1, parseExpression(ExpressionEnd.SEMICOLON));
+                        expression = new AST_Assignment(val1, parseExpression(0));
                         break;
                     case DECREMENT:
                         eat();
-                        if(token.getType() != TokenType.RPAREN)
-                            eat(TokenType.SEMICOLON);
                         expression = new AST_Decrement(val1, true);
                         break;
                     case INCREMENT:
                         eat();
-                        if(token.getType() != TokenType.RPAREN)
-                            eat(TokenType.SEMICOLON);
                         expression = new AST_Increment(val1, true);
                         break;
                     default:
@@ -228,30 +230,27 @@ public class Parser {
                 System.exit(1);
         }
 
-        if(expression != null) return parseExpressionConjunction(expression, expressionEnd);
-        else return null;
-
-        //        // Should be unreachable
-        //        System.err.println("[Parser]: Unreachable");
-        //        System.exit(1);
-        //        return null; // Unreachable
+        return expression;
     }
 
-    /*
-    TODO:
-    Make generic calls of parseExpression into ParseExpressionConjunction calls with a null reference for the expression parameter
-     */
+    private AST_Expression parseUnaryExpression() {
+        if(token.getType() == TokenType.NOT) {
+            eat(); // TokenType.NOT
+            return new AST_Not(parseExpression(0));
+        }
+        return parseExpressionParticle();
+    }
 
-    private AST_Expression parseExpressionConjunction(AST_Expression expression, int expressionEnd) {
+    private AST_Expression parseExpressionConjunction(AST_Expression expression) {
+        if(expression == null) expression = parseUnaryExpression();
+
         TokenType ttype = token.getType();
         switch(ttype) {
             case EQ, NEQ, GT, LT, GTEQ, LTEQ -> {
                 eat(); // some kind of EQ
-                return parseExpressionConjunction(new AST_Comparison(expression, parseExpression(ExpressionEnd.NONE), ttype), expressionEnd);
+                return parseExpressionConjunction(new AST_Comparison(expression, parseUnaryExpression(), ttype));
             }
         }
-
-        if((expressionEnd & ExpressionEnd.SEMICOLON) > 0) eat(TokenType.SEMICOLON);
 
         return expression;
     }

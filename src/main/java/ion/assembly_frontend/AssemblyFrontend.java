@@ -107,6 +107,7 @@ public class AssemblyFrontend {
     }
 
     private void generateBlock(AST_Block block) {
+        if(block == null) return;
         for(AST uncastAST : block.getChildren()) {
             if(uncastAST instanceof AST_Expression) {
                 generateExpression((AST_Expression) uncastAST);
@@ -118,6 +119,15 @@ public class AssemblyFrontend {
 
     private void generateExpression(AST_Expression expression) {
         switch(expression.getExpressionType()) {
+            case NOT -> {
+                AST_Not ast = (AST_Not) expression;
+                generateExpression(ast.getExpression());
+                asm += """
+                            cmp rax, 0
+                            mov rax, 0
+                            sete al
+                        """;
+            }
             case INTEGER -> {
                 AST_Integer ast = (AST_Integer) expression;
                 asm += String.format("    mov %s, %s\n", "rax", Long.toUnsignedString(ast.getValue()));
