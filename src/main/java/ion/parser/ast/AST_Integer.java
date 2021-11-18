@@ -5,7 +5,7 @@ import ion.parser.ExpressionType;
 
 public class AST_Integer extends AST_Expression {
 
-    private long value;
+    private final long value;
 
     public AST_Integer(long value) {
         super(ExpressionType.INTEGER);

@@ -8,9 +8,9 @@ public class AST_DoWhile extends AST_Statement {
 
     private static int nextId = 0;
 
-    private int id;
-    private AST_Expression condition;
-    private AST_Block block;
+    private final int id;
+    private final AST_Expression condition;
+    private final AST_Block block;
 
     public AST_DoWhile(AST_Expression condition, AST_Block block) {
         super(StatementType.DO_WHILE);

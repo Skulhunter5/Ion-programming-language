@@ -6,8 +6,8 @@ import ion.parser.ExpressionType;
 
 public class AST_Comparison extends AST_Expression {
 
-    private AST_Expression a, b;
-    private TokenType compareType;
+    private final AST_Expression a, b;
+    private final TokenType compareType;
 
     public AST_Comparison(AST_Expression a, AST_Expression b, TokenType compareType) {
         super(ExpressionType.COMPARISON);

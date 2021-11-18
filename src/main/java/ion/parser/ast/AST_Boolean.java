@@ -6,7 +6,7 @@ import ion.parser.ExpressionType;
 
 public class AST_Boolean extends AST_Expression {
 
-    private boolean value;
+    private final boolean value;
 
     public AST_Boolean(boolean value) {
         super(ExpressionType.BOOLEAN);

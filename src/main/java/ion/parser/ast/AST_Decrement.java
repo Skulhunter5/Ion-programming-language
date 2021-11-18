@@ -5,8 +5,8 @@ import ion.parser.ExpressionType;
 
 public class AST_Decrement extends AST_Expression {
 
-    private String identifier;
-    private boolean after;
+    private final String identifier;
+    private final boolean after;
 
     public AST_Decrement(String identifier, boolean after) {
         super(ExpressionType.DECREMENT);

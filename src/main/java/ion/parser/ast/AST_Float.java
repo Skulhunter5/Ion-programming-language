@@ -5,7 +5,7 @@ import ion.parser.ExpressionType;
 
 public class AST_Float extends AST_Expression {
 
-    private float value;
+    private final float value;
 
     public AST_Float(float value) {
         super(ExpressionType.FLOAT);

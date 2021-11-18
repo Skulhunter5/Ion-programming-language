@@ -5,8 +5,8 @@ import ion.parser.ExpressionType;
 
 public class AST_Increment extends AST_Expression {
 
-    private String identifier;
-    private boolean after;
+    private final String identifier;
+    private final boolean after;
 
     public AST_Increment(String identifier, boolean after) {
         super(ExpressionType.INCREMENT);

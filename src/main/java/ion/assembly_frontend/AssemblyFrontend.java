@@ -26,6 +26,7 @@ public class AssemblyFrontend {
         definitionSizes.put((byte) 4, "dd");
         definitionSizes.put((byte) 8, "dq");
     }
+
     private void initOperationSizes() {
         operationSizes = new HashMap<>();
         operationSizes.put((byte) 1, "byte");
@@ -49,7 +50,7 @@ public class AssemblyFrontend {
                 segment .data
                 """;
         for(AST_String str : parser.strings) {
-            asm += String.format("    str_%s: db %s\n", str.getId(), formatString(str.getValue()));
+            asm += String.format("    str_%d: db %s, 0\n", str.getId(), formatString(str.getValue()));
         }
         for(Variable var : parser.variables) {
             asm += String.format("    var_%d: %s %d\n", var.getId(), definitionSizes.get(var.getBytesize()), 0);
@@ -119,7 +120,7 @@ public class AssemblyFrontend {
         switch(expression.getExpressionType()) {
             case INTEGER -> {
                 AST_Integer ast = (AST_Integer) expression;
-                asm += String.format("    mov %s, %d\n", "rax", ast.getValue());
+                asm += String.format("    mov %s, %s\n", "rax", Long.toUnsignedString(ast.getValue()));
             }
             case COMPARISON -> {
                 AST_Comparison ast = (AST_Comparison) expression;
@@ -258,27 +259,84 @@ public class AssemblyFrontend {
     }
 
     private String getSizedRegister(String reg, byte bytesize) {
-        if(reg.equals("rax")) {
-            if(bytesize == 1) return "al";
-            else if(bytesize == 2) return "ax";
-            else if(bytesize == 4) return "eax";
-            else if(bytesize == 8) return "rax";
-        } else if(reg.equals("rbx")) {
-            if(bytesize == 1) return "bl";
-            else if(bytesize == 4) return "ebx";
-            else if(bytesize == 8) return "rbx";
-        } else if(reg.equals("rcx")) {
-            if(bytesize == 1) return "cl";
-            else if(bytesize == 4) return "ecx";
-            else if(bytesize == 8) return "rcx";
-        } else if(reg.equals("rdx")) {
-            if(bytesize == 1) return "dl";
-            else if(bytesize == 4) return "edx";
-            else if(bytesize == 8) return "rdx";
-        } else if(reg.equals("rdi")) {
-            if(bytesize == 2) return "di";
-            else if(bytesize == 4) return "edi";
-            else if(bytesize == 8) return "rdi";
+        switch(reg) {
+            case "rax":
+                switch(bytesize) {
+                    case 1 -> {
+                        return "al";
+                    }
+                    case 2 -> {
+                        return "ax";
+                    }
+                    case 4 -> {
+                        return "eax";
+                    }
+                    case 8 -> {
+                        return "rax";
+                    }
+                }
+                break;
+            case "rbx":
+                switch(bytesize) {
+                    case 1 -> {
+                        return "bl";
+                    }
+                    case 2 -> {
+                        return "bx";
+                    }
+                    case 4 -> {
+                        return "ebx";
+                    }
+                    case 8 -> {
+                        return "rbx";
+                    }
+                }
+                break;
+            case "rcx":
+                switch(bytesize) {
+                    case 1 -> {
+                        return "cl";
+                    }
+                    case 2 -> {
+                        return "cx";
+                    }
+                    case 4 -> {
+                        return "ecx";
+                    }
+                    case 8 -> {
+                        return "rcx";
+                    }
+                }
+                break;
+            case "rdx":
+                switch(bytesize) {
+                    case 1 -> {
+                        return "dl";
+                    }
+                    case 2 -> {
+                        return "dx";
+                    }
+                    case 4 -> {
+                        return "edx";
+                    }
+                    case 8 -> {
+                        return "rdx";
+                    }
+                }
+                break;
+            case "rdi":
+                switch(bytesize) {
+                    case 2 -> {
+                        return "di";
+                    }
+                    case 4 -> {
+                        return "edi";
+                    }
+                    case 8 -> {
+                        return "rdi";
+                    }
+                }
+                break;
         }
 
         System.err.println("[AssemblyFrontend] Error in getSmallerRegister.");

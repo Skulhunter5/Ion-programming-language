@@ -5,8 +5,8 @@ import ion.parser.ExpressionType;
 
 public class AST_Assignment extends AST_Expression {
 
-    private String identifier;
-    private AST_Expression value;
+    private final String identifier;
+    private final AST_Expression value;
 
     public AST_Assignment(String identifier, AST_Expression value) {
         super(ExpressionType.ASSIGNMENT);
@@ -15,7 +15,6 @@ public class AST_Assignment extends AST_Expression {
     }
 
     // Getters
-    public String getReturnType() {return null;} // TODO: implement
     public String getIdentifier() {return identifier;}
     public AST_Expression getValue() {return value;}
 

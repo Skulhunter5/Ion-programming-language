@@ -8,10 +8,10 @@ public class AST_If extends AST_Statement {
 
     private static int nextId = 0;
 
-    private int id;
-    private AST_Expression condition;
-    private AST_Block ifBlock;
-    private AST_Block elseBlock;
+    private final int id;
+    private final AST_Expression condition;
+    private final AST_Block ifBlock;
+    private final AST_Block elseBlock;
 
     public AST_If(AST_Expression condition, AST_Block ifBlock, AST_Block elseBlock) {
         super(StatementType.IF);

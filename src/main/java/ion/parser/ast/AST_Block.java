@@ -7,11 +7,11 @@ import java.util.ArrayList;
 
 public class AST_Block extends AST {
 
-    private ArrayList<AST> children;
+    private final ArrayList<AST> children;
 
     public AST_Block() {
         super(ASTType.BLOCK);
-        children = new ArrayList<AST>();
+        children = new ArrayList<>();
     }
 
     // Getters

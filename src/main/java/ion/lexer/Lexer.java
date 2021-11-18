@@ -7,8 +7,8 @@ import java.util.List;
 
 public class Lexer {
 
-    private String src;
-    private int src_size;
+    private final String src;
+    private final int src_size;
     private int i;
     private char c;
 
@@ -101,12 +101,12 @@ public class Lexer {
     }
 
     private void skipComments() {
-        while((c == '/' && peek(1) == '/') || (c == '/' && peek(1) == '*')) {
-            if(c == '/' && peek(1) == '/') {
+        while(c == '/' && (peek(1) == '/' || peek(1) == '*')) {
+            if(peek(1) == '/') {
                 advance(2);
                 while(c != '\n') advance();
                 advance();
-            } else if(c == '/' && peek(1) == '*') {
+            } else if(peek(1) == '*') {
                 advance(2);
                 while(!(c == '*' && peek(1) == '/')) advance();
                 advance(2);
