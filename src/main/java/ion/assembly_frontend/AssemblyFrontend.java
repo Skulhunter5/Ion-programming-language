@@ -52,7 +52,8 @@ public class AssemblyFrontend {
         for(AST_String str : parser.strings) {
             asm += String.format("    str_%d: db %s, 0\n", str.getId(), formatString(str.getValue()));
         }
-        for(Variable var : parser.variables) {
+        for(String identifier : parser.variables.keySet()) {
+            Variable var = getVariable(identifier);
             asm += String.format("    var_%d: %s %d\n", var.getId(), definitionSizes.get(var.getBytesize()), 0);
         }
         asm += """
@@ -243,12 +244,7 @@ public class AssemblyFrontend {
     }
 
     private Variable getVariable(String identifier) {
-        for(Variable var : parser.variables) {
-            if(var.getIdentifier().equals(identifier)) return var;
-        }
-        System.err.println("[AssemblyFrontend]: Trying to access non-existent variable");
-        System.exit(1);
-        return null; // Unreachable
+        return parser.variables.get(identifier);
     }
 
     private String formatString(String str) { // Might not work

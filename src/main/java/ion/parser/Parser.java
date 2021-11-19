@@ -6,6 +6,7 @@ import ion.lexer.TokenType;
 import ion.parser.ast.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Parser {
 
@@ -14,7 +15,7 @@ public class Parser {
     private final ArrayList<Token> peekTokens;
 
     public AST_Block root; // TODO: implement functions and change root from block to declarationSpace
-    public ArrayList<Variable> variables;
+    public HashMap<String, Variable> variables;
     public ArrayList<AST_String> strings;
 
     public Parser(Lexer lexer) {
@@ -23,7 +24,7 @@ public class Parser {
         token = lexer.nextToken();
 
         strings = new ArrayList<>();
-        variables = new ArrayList<>();
+        variables = new HashMap<>();
     }
 
     /**
@@ -31,7 +32,9 @@ public class Parser {
      *
      * @return old token
      */
+    private static int s = 0;
     private Token eat() {
+        System.out.println(++s);
         Token old = token;
         if(peekTokens.size() == 0) token = lexer.nextToken();
         else token = peekTokens.remove(0);
@@ -152,9 +155,18 @@ public class Parser {
         return null; // Unreachable
     }
 
-    private AST_Expression parseExpression(int expressionEnd) {
-        AST_Expression expression = parseExpressionConjunction(null);
+    private AST_Expression parseExpression(int expressionEnd) { // Mark: might not work correctly
+        AST_Expression expression = null;
 
+        // TODO: check if I need to do a surround check somewhere else too
+        if(token.getType() == TokenType.LPAREN) {
+            eat(); // TokenType.LPAREN
+            expression = parseExpression(ExpressionEnd.PARENTHESIS);
+        }
+
+        expression = parseExpressionConjunction(expression);
+
+        if((expressionEnd & ExpressionEnd.PARENTHESIS) > 0) eat(TokenType.RPAREN);
         if((expressionEnd & ExpressionEnd.SEMICOLON) > 0) eat(TokenType.SEMICOLON);
 
         return expression;
@@ -180,21 +192,15 @@ public class Parser {
                         String val2 = token.getValue();
                         eat(); // TokenType.IDENTIFIER
                         switch(token.getType()) { // TODO: implement declaration and assignment of variable in one go
-//                            case SEMICOLON:
-//                                eat(); // TokenType.SEMICOLON
-//                                expression = registerVariable(val1, val2, null);
-//                                break;
                             case ASSIGN: // TODO: add capability of declaration/definition inside of a condition
                                 eat(); // TokenType.ASSIGN
                                 expression = registerVariable(val1, val2, parseExpression(0));
                                 break;
                             default:
                                 registerVariable(val1, val2, null);
-//                                System.err.println("[Parser]: Unexpected token: " + token.getType());
-//                                System.exit(1);
                         }
                         break;
-                    case ASSIGN: // TODO: add capability of declaration/definition inside of a condition
+                    case ASSIGN:
                         eat(); // TokenType.ASSIGN
                         expression = new AST_Assignment(val1, parseExpression(0));
                         break;
@@ -208,9 +214,6 @@ public class Parser {
                         break;
                     default:
                         expression = new AST_Variable(val1);
-                        //                    default:
-                        //                        System.err.println("[Parser]: Unexpected token: " + token.getType());
-                        //                        System.exit(1);
                 }
                 break;
             case DECREMENT: {
@@ -234,10 +237,26 @@ public class Parser {
     }
 
     private AST_Expression parseUnaryExpression() {
+        AST_Expression expression = null;
+
+        boolean useParenthesis = false;
+        if(token.getType() == TokenType.LPAREN) {
+            eat(); // TokenType.LPAREN
+            useParenthesis = true;
+        }
+
         if(token.getType() == TokenType.NOT) {
             eat(); // TokenType.NOT
-            return new AST_Not(parseExpression(0));
+            expression = new AST_Not(parseExpression(0));
         }
+
+        if(expression != null) {
+            if(useParenthesis) eat(TokenType.RPAREN);
+        }
+
+        if(useParenthesis && (expression != null)) return parseExpression(ExpressionEnd.PARENTHESIS);
+
+        if(expression != null) return expression;
         return parseExpressionParticle();
     }
 
@@ -247,7 +266,7 @@ public class Parser {
         TokenType ttype = token.getType();
         switch(ttype) {
             case EQ, NEQ, GT, LT, GTEQ, LTEQ -> {
-                eat(); // some kind of EQ
+                eat(); // some kind of comparison operator
                 return parseExpressionConjunction(new AST_Comparison(expression, parseUnaryExpression(), ttype));
             }
         }
@@ -256,6 +275,10 @@ public class Parser {
     }
 
     private AST_Expression registerVariable(String type, String identifier, AST_Expression startValue) { // Remove AST_VariableDeclaration
+        if(variables.containsKey(identifier)) {
+            System.err.println("[Parser] Trying to register a variable with an already existent identifier.");
+            System.exit(1);
+        }
         byte bytesize = 0;
         switch(type) {
             case "uint64" -> bytesize = 8;
@@ -267,7 +290,7 @@ public class Parser {
                 System.exit(1);
             }
         }
-        variables.add(new Variable(type, bytesize, identifier)); // TODO
+        variables.put(identifier, new Variable(type, bytesize, identifier)); // TODO
         if(startValue == null) return null;
         return new AST_Assignment(identifier, startValue);
     }

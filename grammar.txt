@@ -1,0 +1,10 @@
+expr:       conj
+            particle
+            unary
+
+unary:      (- !) expr
+
+conj:       expr (== < > <= >= != + - * / | & ^ || &&) expr
+
+particle:   identifier identifier = expr
+            identifier = expr
