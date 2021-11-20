@@ -19,5 +19,9 @@ public abstract class AST_Expression extends AST {
     public String toString() {
         return super.toString() + "-" + expressionType;
     }
+    @Override
+    public String readableString() {
+        return super.toString() + "-" + expressionType;
+    }
 
 }

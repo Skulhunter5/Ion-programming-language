@@ -26,6 +26,10 @@ public class AST_Comparison extends AST_Expression {
     // Print
     @Override
     public String toString() {
+        return super.toString() + " a=" + a + " b=" + b + " compareType='" + compareType + "'>";
+    }
+    @Override
+    public String readableString() {
         return super.toString() + "\n\ta=\n" + AST.indent(a, 2) + "\n\tb=\n" + AST.indent(b, 2) + "\n\tcompareType='" + compareType + "'\n>";
     }
 

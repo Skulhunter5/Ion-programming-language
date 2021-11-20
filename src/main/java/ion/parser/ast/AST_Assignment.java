@@ -22,6 +22,10 @@ public class AST_Assignment extends AST_Expression {
     //Print
     @Override
     public String toString() {
+        return super.toString() + " identifier='" + identifier + "' value=" + value + ">";
+    }
+    @Override
+    public String readableString() {
         String res = super.toString();
         res += "\n\tidentifier='" + identifier + "'";
         res += "\n\tvalue=\n" + AST.indent(value, 2);

@@ -17,11 +17,14 @@ public class AST {
     public String toString() {
         return "<AST-" + type;
     }
+    public String readableString() {
+        return "<AST-" + type;
+    }
 
     // Utility
 
     protected static String indent(AST ast) {
-        String str = ast.toString();
+        String str = ast.readableString();
         String[] lines = str.split("\n");
         String res = "";
         for(String line : lines) res += "\t" + line + "\n";
@@ -29,7 +32,7 @@ public class AST {
     }
 
     protected static String indent(AST ast, int n) {
-        String str = ast.toString();
+        String str = ast.readableString();
         String indent = "";
         for(int i = 0; i < n; i++) indent += "\t";
         String[] lines = str.split("\n");

@@ -30,7 +30,7 @@ public class Main {
         Lexer lexer = new Lexer(code);
         Parser parser = new Parser(lexer);
         //System.out.println(parser.parse());
-        String astString = parser.parse().toString();
+        String astString = parser.parse().readableString();
         AssemblyFrontend asmFront = new AssemblyFrontend(parser);
         try {
             Utils.writeFileFromString(outputFile, asmFront.generate("nasm linux x86_64"));

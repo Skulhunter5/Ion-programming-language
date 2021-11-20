@@ -32,6 +32,10 @@ public class AST_If extends AST_Statement {
     // Print
     @Override
     public String toString() {
+        return super.toString() + " condition=" + condition + " block_if=" + ifBlock + (elseBlock != null ? " block_else=" + elseBlock : "") + ">";
+    }
+    @Override
+    public String readableString() {
         return super.toString() + "\n\tcondition=\n" + AST.indent(condition, 2) + "\n\tblock_if=\n" + AST.indent(ifBlock, 2) + (elseBlock != null ? "\n\tblock_else=\n" + AST.indent(elseBlock, 2) : "") + "\n>";
     }
 

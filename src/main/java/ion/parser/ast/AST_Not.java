@@ -20,6 +20,10 @@ public class AST_Not extends AST_Expression {
     // Print
     @Override
     public String toString() {
+        return super.toString() + " expression=" + expression + ">";
+    }
+    @Override
+    public String readableString() {
         return super.toString() + "\n\texpression=\n" + AST.indent(expression, 2) + "\n>";
     }
 

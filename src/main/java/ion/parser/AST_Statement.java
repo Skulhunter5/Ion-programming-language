@@ -13,10 +13,12 @@ public abstract class AST_Statement extends AST {
     public StatementType getStatementType() {return statementType;}
 
     // Print
-
-
     @Override
     public String toString() {
+        return super.toString() + "-" + statementType;
+    }
+    @Override
+    public String readableString() {
         return super.toString() + "-" + statementType;
     }
 

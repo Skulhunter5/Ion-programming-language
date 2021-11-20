@@ -21,6 +21,10 @@ public class AST_Print extends AST_Statement { // TODO: make print a statement i
     // Print
     @Override
     public String toString() {
+        return super.toString() + " expression=" + expression + ">";
+    }
+    @Override
+    public String readableString() {
         return super.toString() + "\n\texpression=\n" + AST.indent(expression, 2) + "\n>";
     }
 

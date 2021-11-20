@@ -20,6 +20,10 @@ public class AST_Boolean extends AST_Expression {
     // Print
     @Override
     public String toString() {
+        return super.toString() + " value='" + value + "'>";
+    }
+    @Override
+    public String readableString() {
         return super.toString() + "\n\tvalue='" + value + "'\n>";
     }
 
