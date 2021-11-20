@@ -4,16 +4,16 @@ public class Variable {
 
     private static int nextId = 0;
 
-    private int id;
-    private String type;
-    private byte bytesize;
-    private String identifier;
+    private final int id;
+    private final String type;
+    private final byte bytesize;
+    private final String identifier;
 
-    public Variable(String type, byte bitsize, String identifier) {
+    public Variable(String type, byte bytesize, String identifier) {
         this.id = Variable.nextId++;
 
         this.type = type;
-        this.bytesize = bitsize;
+        this.bytesize = bytesize;
         this.identifier = identifier;
     }
 

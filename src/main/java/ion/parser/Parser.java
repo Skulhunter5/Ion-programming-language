@@ -336,20 +336,23 @@ public class Parser {
             System.err.println("[Parser] Trying to register a variable with an already existent identifier.");
             System.exit(1);
         }
-        byte bytesize = 0;
-        switch(type) {
-            case "uint64" -> bytesize = 8;
-            case "uint32" -> bytesize = 4;
-            case "uint16" -> bytesize = 2;
-            case "uint8" -> bytesize = 1;
-            default -> {
-                System.err.println("[Parser] Unknown bytesize.");
-                System.exit(1);
-            }
-        }
-        variables.put(identifier, new Variable(type, bytesize, identifier)); // TODO
+
+        variables.put(identifier, new Variable(type, getByteSize(type), identifier));
         if(startValue == null) return new AST_Assignment(identifier, new AST_Integer(0));
         return new AST_Assignment(identifier, startValue);
+    }
+
+    private byte getByteSize(String type) {
+        switch(type) {
+            case "uint64": return 8;
+            case "uint32": return 4;
+            case "uint16": return 2;
+            case "uint8": return 1;
+            default:
+                System.err.println("[Parser] Unknown bytesize.");
+                System.exit(1);
+                return 0; // Unreachable
+        }
     }
 
     // Getters
