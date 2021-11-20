@@ -32,9 +32,7 @@ public class Parser {
      *
      * @return old token
      */
-    private static int s = 0;
     private Token eat() {
-        System.out.println(++s);
         Token old = token;
         if(peekTokens.size() == 0) token = lexer.nextToken();
         else token = peekTokens.remove(0);
@@ -54,6 +52,18 @@ public class Parser {
             System.exit(1);
         }
         return eat();
+    }
+
+    /**
+     * retrieves the next token and returns whether the old token fits the specified TokenType for custom Error handling;
+     *
+     * @param type TokenType to check for
+     * @return true if wrong; false if correct
+     */
+    private boolean eatWithFeedback(TokenType type) {
+        if(token.getType() != type) return true;
+        eat();
+        return false;
     }
 
     /**
@@ -103,9 +113,15 @@ public class Parser {
             switch(token.getValue()) {
                 case "if" -> {
                     eat(); // TokenType.KEYWORD "if"
-                    eat(TokenType.LPAREN);
-                    AST_Expression condition = parseExpression(ExpressionEnd.NONE);
-                    eat(TokenType.RPAREN);
+                    if(eatWithFeedback(TokenType.LPAREN)) { // eat(TokenType.LPAREN);
+                        System.err.println("[Parser] Expected LPAREN after 'if' keyword, instead got: " + token);
+                        System.exit(1);
+                    }
+                    AST_Expression condition = parseExpressionConjunction(0);
+                    if(eatWithFeedback(TokenType.RPAREN)) { // eat(TokenType.RPAREN);
+                        System.err.println("[Parser] Expected RPAREN to close condition block of if-statement, instead got: " + token);
+                        System.exit(1);
+                    }
                     AST_Block ifBlock = parseBlock(false);
                     AST_Block elseBlock = null;
                     if(token.getType() == TokenType.KEYWORD && token.getValue().equals("else")) {
@@ -116,9 +132,15 @@ public class Parser {
                 }
                 case "while" -> {
                     eat(); // TokenType.KEYWORD "while"
-                    eat(TokenType.LPAREN);
-                    AST_Expression condition = parseExpression(ExpressionEnd.NONE);
-                    eat(TokenType.RPAREN);
+                    if(eatWithFeedback(TokenType.LPAREN)) { // eat(TokenType.LPAREN);
+                        System.err.println("[Parser] Expected LPAREN after 'while' keyword, instead got: " + token);
+                        System.exit(1);
+                    }
+                    AST_Expression condition = parseExpressionConjunction(0);
+                    if(eatWithFeedback(TokenType.RPAREN)) { // eat(TokenType.RPAREN);
+                        System.err.println("[Parser] Expected RPAREN to close condition block of while-statement, instead got: " + token);
+                        System.exit(1);
+                    }
                     AST_Block block = parseBlock(false);
                     return new AST_While(condition, block);
                 }
@@ -127,19 +149,31 @@ public class Parser {
                     AST_Block block = parseBlock(false);
                     String val = eat(TokenType.KEYWORD).getValue();
                     if(!val.equals("while")) {
-                        System.err.println("[Parser] Unexpected keyword: '" + val + "'");
+                        System.err.println("[Parser] Expected 'while' keyword after block of do-statement, instead got: '" + token + "'");
                         System.exit(1);
                     }
-                    eat(TokenType.LPAREN);
-                    AST_Expression condition = parseExpression(ExpressionEnd.NONE);
-                    eat(TokenType.RPAREN);
-                    eat(TokenType.SEMICOLON);
+                    if(eatWithFeedback(TokenType.LPAREN)) { // eat(TokenType.LPAREN);
+                        System.err.println("[Parser] Expected LPAREN after 'while' keyword in do-while-statement, instead got: " + token);
+                        System.exit(1);
+                    }
+                    AST_Expression condition = parseExpressionConjunction(0);
+                    if(eatWithFeedback(TokenType.RPAREN)) { // eat(TokenType.RPAREN);
+                        System.err.println("[Parser] Expected RPAREN to close condition block of do-while-statement, instead got: " + token);
+                        System.exit(1);
+                    }
+                    if(eatWithFeedback(TokenType.SEMICOLON)) { // eat(TokenType.SEMICOLON);
+                        System.err.println("[Parser] Expected SEMICOLON after do-while-statement, instead got: " + token);
+                        System.exit(1);
+                    }
                     return new AST_DoWhile(condition, block);
                 }
                 case "print" -> {
                     eat(); // TokenType.KEYWORD "print"
-                    AST_Expression expression = parseExpression(ExpressionEnd.NONE);
-                    eat(TokenType.SEMICOLON);
+                    AST_Expression expression = parseExpressionConjunction(0);
+                    if(eatWithFeedback(TokenType.SEMICOLON)) { // eat(TokenType.SEMICOLON);
+                        System.err.println("[Parser] Expected SEMICOLON after print-statement, instead got: " + token);
+                        System.exit(1);
+                    }
                     return new AST_Print(expression);
                 }
                 default -> {
@@ -147,7 +181,7 @@ public class Parser {
                     System.exit(1);
                 }
             }
-        } else return parseExpression(ExpressionEnd.SEMICOLON);
+        } else return parseExpressionConjunction(ExpressionEnd.SEMICOLON);
 
         // Should be unreachable
         System.err.println("[Parser]: Unreachable");
@@ -155,21 +189,86 @@ public class Parser {
         return null; // Unreachable
     }
 
-    private AST_Expression parseExpression(int expressionEnd) { // Mark: might not work correctly
-        AST_Expression expression = null;
+    private static final TokenType[] conjunctions = new TokenType[]{
+            TokenType.EQ,
+            TokenType.NEQ,
+            TokenType.GT,
+            TokenType.LT,
+            TokenType.GTEQ,
+            TokenType.LTEQ,
+    };
+    private static boolean isConjunction(TokenType type) {
+        for(TokenType t : conjunctions) if(t == type) return true;
+        return false;
+    }
+    private AST_Expression parseExpressionConjunction(int expressionEnd) {
+        ArrayList<AST_Expression> expressions = new ArrayList<>();
+        expressions.add(parseExpression());
+        ArrayList<TokenType> conjunctions = new ArrayList<>();
 
-        // TODO: check if I need to do a surround check somewhere else too
-        if(token.getType() == TokenType.LPAREN) {
-            eat(); // TokenType.LPAREN
-            expression = parseExpression(ExpressionEnd.PARENTHESIS);
+        while(isConjunction(token.getType())) {
+            conjunctions.add(eat().getType()); // eat -> some kind of conjunction
+            expressions.add(parseExpression());
         }
 
-        expression = parseExpressionConjunction(expression);
+        if(expressions.size() == 0) {
+            System.err.println("[Parser parseExpressionConjunction(int)] expressions shouldn't be empty.");
+            System.exit(1);
+        }
+        while(expressions.size() > 1) {
+            TokenType ttype = conjunctions.get(0);
+            switch(ttype) {
+                case EQ, NEQ, GT, LT, GTEQ, LTEQ -> {
+                    expressions.set(0, new AST_Comparison(expressions.get(0), expressions.get(1), ttype));
+                }
+            }
+            expressions.remove(1);
+            conjunctions.remove(0);
+        }
 
-        if((expressionEnd & ExpressionEnd.PARENTHESIS) > 0) eat(TokenType.RPAREN);
-        if((expressionEnd & ExpressionEnd.SEMICOLON) > 0) eat(TokenType.SEMICOLON);
+        if((expressionEnd & ExpressionEnd.PARENTHESIS) > 0) if(eatWithFeedback(TokenType.RPAREN)) {
+            System.err.println("[Parser] Expected RPAREN to close expression: " + expressions.get(0));
+            System.exit(1);
+        }
+        if((expressionEnd & ExpressionEnd.SEMICOLON) > 0) if(eatWithFeedback(TokenType.SEMICOLON)) {
+            System.err.println("[Parser] Expected SEMICOLON to close expression: " + expressions.get(0));
+            System.exit(1);
+        }
 
-        return expression;
+        return expressions.get(0);
+    }
+
+    private AST_Expression parseExpression() { // Mark: might not work correctly
+        AST_Expression expression = null;
+
+        boolean useParenthesis = false;
+        if(token.getType() == TokenType.LPAREN) {
+            eat(); // TokenType.LPAREN
+            expression = parseExpressionConjunction(0);
+            useParenthesis = true;
+        }
+
+        if(useParenthesis) {
+            if(eatWithFeedback(TokenType.RPAREN)) {
+                System.err.println("[Parser] Expected RPAREN to close expression: " + expression);
+                System.exit(1);
+            }
+            return expression;
+        }
+
+        return parseUnaryExpression();
+    }
+
+    private AST_Expression parseUnaryExpression() {
+        AST_Expression expression = null;
+
+        if(token.getType() == TokenType.NOT) {
+            eat(); // TokenType.NOT
+            expression = new AST_Not(parseExpression());
+        }
+
+        if(expression != null) return expression;
+        return parseExpressionParticle();
     }
 
     private AST_Expression parseExpressionParticle() {
@@ -194,15 +293,15 @@ public class Parser {
                         switch(token.getType()) { // TODO: implement declaration and assignment of variable in one go
                             case ASSIGN: // TODO: add capability of declaration/definition inside of a condition
                                 eat(); // TokenType.ASSIGN
-                                expression = registerVariable(val1, val2, parseExpression(0));
+                                expression = registerVariable(val1, val2, parseExpressionConjunction(0));
                                 break;
                             default:
-                                registerVariable(val1, val2, null);
+                                expression = registerVariable(val1, val2, null);
                         }
                         break;
                     case ASSIGN:
                         eat(); // TokenType.ASSIGN
-                        expression = new AST_Assignment(val1, parseExpression(0));
+                        expression = new AST_Assignment(val1, parseExpressionConjunction(0));
                         break;
                     case DECREMENT:
                         eat();
@@ -236,44 +335,6 @@ public class Parser {
         return expression;
     }
 
-    private AST_Expression parseUnaryExpression() {
-        AST_Expression expression = null;
-
-        boolean useParenthesis = false;
-        if(token.getType() == TokenType.LPAREN) {
-            eat(); // TokenType.LPAREN
-            useParenthesis = true;
-        }
-
-        if(token.getType() == TokenType.NOT) {
-            eat(); // TokenType.NOT
-            expression = new AST_Not(parseExpression(0));
-        }
-
-        if(expression != null) {
-            if(useParenthesis) eat(TokenType.RPAREN);
-        }
-
-        if(useParenthesis && (expression != null)) return parseExpression(ExpressionEnd.PARENTHESIS);
-
-        if(expression != null) return expression;
-        return parseExpressionParticle();
-    }
-
-    private AST_Expression parseExpressionConjunction(AST_Expression expression) {
-        if(expression == null) expression = parseUnaryExpression();
-
-        TokenType ttype = token.getType();
-        switch(ttype) {
-            case EQ, NEQ, GT, LT, GTEQ, LTEQ -> {
-                eat(); // some kind of comparison operator
-                return parseExpressionConjunction(new AST_Comparison(expression, parseUnaryExpression(), ttype));
-            }
-        }
-
-        return expression;
-    }
-
     private AST_Expression registerVariable(String type, String identifier, AST_Expression startValue) { // Remove AST_VariableDeclaration
         if(variables.containsKey(identifier)) {
             System.err.println("[Parser] Trying to register a variable with an already existent identifier.");
@@ -291,7 +352,7 @@ public class Parser {
             }
         }
         variables.put(identifier, new Variable(type, bytesize, identifier)); // TODO
-        if(startValue == null) return null;
+        if(startValue == null) return new AST_Assignment(identifier, new AST_Integer(0));
         return new AST_Assignment(identifier, startValue);
     }
 
