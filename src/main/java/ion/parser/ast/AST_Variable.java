@@ -19,7 +19,7 @@ public class AST_Variable extends AST_Expression {
     // Print
     @Override
     public String toString() {
-        return super.toString() + " identifier='" + identifier + "'>";
+        return super.toString() + "\n\tidentifier='" + identifier + "'\n>";
     }
 
 }

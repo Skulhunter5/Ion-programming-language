@@ -1,5 +1,6 @@
 package ion.parser.ast;
 
+import ion.parser.AST;
 import ion.parser.AST_Expression;
 import ion.parser.ExpressionType;
 
@@ -19,7 +20,7 @@ public class AST_Not extends AST_Expression {
     // Print
     @Override
     public String toString() {
-        return super.toString() + " expression=" + expression + ">";
+        return super.toString() + "\n\texpression=\n" + AST.indent(expression, 2) + "\n>";
     }
 
 }

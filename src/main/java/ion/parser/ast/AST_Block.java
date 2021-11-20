@@ -21,7 +21,11 @@ public class AST_Block extends AST {
     // Print
     @Override
     public String toString() {
-        return super.toString() + " children=" + children + ">";
+        String res = super.toString() + " children=[\n";
+        for(AST child : children) res += AST.indent(child) + ",\n";
+        res = res.substring(0, res.length() - 2);
+        res += "\n>";
+        return res;
     }
 
 }

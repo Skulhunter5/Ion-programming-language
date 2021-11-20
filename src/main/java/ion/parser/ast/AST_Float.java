@@ -18,7 +18,7 @@ public class AST_Float extends AST_Expression {
     // Print
     @Override
     public String toString() {
-        return super.toString() + " value='" + value + "'>";
+        return super.toString() + "\n\tvalue='" + value + "'\n>";
     }
 
 }

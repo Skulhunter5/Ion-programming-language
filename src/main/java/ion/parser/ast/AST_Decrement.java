@@ -23,7 +23,7 @@ public class AST_Decrement extends AST_Expression {
     // Print
     @Override
     public String toString() {
-        return super.toString() + " identifier='" + identifier + "'>";
+        return super.toString() + "\n\tidentifier='" + identifier + "'\n>";
     }
 
 }

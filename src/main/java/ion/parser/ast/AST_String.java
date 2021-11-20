@@ -25,7 +25,7 @@ public class AST_String extends AST_Expression {
     // Print
     @Override
     public String toString() {
-        return super.toString() + " value='" + value + "' id='" + id + "'>";
+        return super.toString() + "\n\tvalue=\n\t\t'" + value + "'\n\tid='" + id + "'\n>";
     }
 
 }

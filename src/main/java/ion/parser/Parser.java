@@ -215,15 +215,11 @@ public class Parser {
             System.err.println("[Parser parseExpressionConjunction(int)] expressions shouldn't be empty.");
             System.exit(1);
         }
-        while(expressions.size() > 1) {
-            TokenType ttype = conjunctions.get(0);
+        while(expressions.size() > 1) { // TODO: implement operator precedence
+            TokenType ttype = conjunctions.remove(0);
             switch(ttype) {
-                case EQ, NEQ, GT, LT, GTEQ, LTEQ -> {
-                    expressions.set(0, new AST_Comparison(expressions.get(0), expressions.get(1), ttype));
-                }
+                case EQ, NEQ, GT, LT, GTEQ, LTEQ -> expressions.set(0, new AST_Comparison(expressions.get(0), expressions.remove(1), ttype));
             }
-            expressions.remove(1);
-            conjunctions.remove(0);
         }
 
         if((expressionEnd & ExpressionEnd.PARENTHESIS) > 0) if(eatWithFeedback(TokenType.RPAREN)) {

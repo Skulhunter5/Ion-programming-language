@@ -1,5 +1,6 @@
 package ion.parser.ast;
 
+import ion.parser.AST;
 import ion.parser.AST_Expression;
 import ion.parser.AST_Statement;
 import ion.parser.StatementType;
@@ -28,7 +29,7 @@ public class AST_DoWhile extends AST_Statement {
     // Print
     @Override
     public String toString() {
-        return super.toString() + " condition=" + condition + " block=" + block + ">";
+        return super.toString() + "\n\tcondition=\n" + AST.indent(condition, 2) + "\n\tblock=\n" + AST.indent(block, 2) + "\n>";
     }
 
 }

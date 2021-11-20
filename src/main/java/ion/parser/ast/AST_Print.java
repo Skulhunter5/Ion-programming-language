@@ -1,5 +1,6 @@
 package ion.parser.ast;
 
+import ion.parser.AST;
 import ion.parser.AST_Expression;
 import ion.parser.AST_Statement;
 import ion.parser.StatementType;
@@ -20,7 +21,7 @@ public class AST_Print extends AST_Statement { // TODO: make print a statement i
     // Print
     @Override
     public String toString() {
-        return super.toString() + " expression=" + expression + ">";
+        return super.toString() + "\n\texpression=\n" + AST.indent(expression, 2) + "\n>";
     }
 
 }
