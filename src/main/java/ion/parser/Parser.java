@@ -258,9 +258,11 @@ public class Parser {
     private AST_Expression parseUnaryExpression() {
         AST_Expression expression = null;
 
-        if(token.getType() == TokenType.NOT) {
-            eat(); // TokenType.NOT
-            expression = new AST_Not(parseExpression());
+        switch(token.getType()) {
+            case NOT -> {
+                eat(); // TokenType.NOT
+                expression = new AST_Not(parseExpression());
+            }
         }
 
         if(expression != null) return expression;

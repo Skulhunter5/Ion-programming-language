@@ -37,7 +37,7 @@ public class AssemblyFrontend {
 
     public String generate(String asmType) {
         if(asmType.equals("nasm linux x86_64")) {
-            return generate_nasm_linux_x86_64();
+            return generate_nasm_linux_x86_64(); // Wrong due to blocks/expressions not being executed in the order they appear in
         }
         return null;
     }

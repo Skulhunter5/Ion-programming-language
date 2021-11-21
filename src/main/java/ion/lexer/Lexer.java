@@ -149,6 +149,16 @@ public class Lexer {
                 advance();
                 if(c == '=') return advanceWith(new Token(TokenType.NEQ, null));
                 return new Token(TokenType.NOT, null);
+            case '&':
+                advance();
+                if(c == '&') return advanceWith(new Token(TokenType.AND, null));
+                return new Token(TokenType.BITWISE_AND, null);
+            case '|':
+                advance();
+                if(c == '|') return advanceWith(new Token(TokenType.OR, null));
+                return new Token(TokenType.BITWISE_OR, null);
+            case '^':
+                return advanceWith(new Token(TokenType.BITWISE_XOR, null));
             case ';':
                 return advanceWith(new Token(TokenType.SEMICOLON, null));
             case '(':
