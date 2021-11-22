@@ -2,6 +2,7 @@ package ion.assembly_frontend;
 
 import ion.parser.*;
 import ion.parser.ast.*;
+import ion.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -91,6 +92,16 @@ public class AssemblyFrontend {
                     syscall
                     add     rsp, 40
                     ret
+                alloc:
+                    mov rsi, rdi
+                    mov rax, 9 ; syscall: mmap
+                    mov rdi, 0 ; location hint: os chooses
+                    mov rdx, 3 ; PROT_READ | PROT_WRITE
+                    mov r10, 0x21 ; MAP_ANONYMOUS | MAP_SHARED
+                    mov r8, -1 ; required: fd=-1
+                    mov r9, 0 ; required: offset=0
+                    syscall
+                    ret
                 global _start
                 _start:
                 """;
@@ -120,6 +131,19 @@ public class AssemblyFrontend {
 
     private void generateExpression(AST_Expression expression) {
         switch(expression.getExpressionType()) {
+            case ARRAY_ACCESS -> {
+                AST_Array ast = (AST_Array) expression;
+                Variable var = getVariable(ast.getIdentifier());
+                if(!var.getType().endsWith("*")) {
+                    System.err.println("Array access operator can only be used on pointers.");
+                    System.exit(1);
+                }
+                generateExpression(ast.getIndexExpression());
+                asm += String.format("    mov rbx, %d\n", Utils.getByteSize(var.getType().substring(0, var.getType().length() - 1)));
+                asm += "    mul rbx\n";
+                asm += String.format("    add rax, var_%d\n", var.getId());
+                asm += String.format("    mov %s, %s [rax]\n", getSizedRegister("rax", var.getBytesize()), operationSizes.get(var.getBytesize()));
+            }
             case NOT -> {
                 AST_Not ast = (AST_Not) expression;
                 generateExpression(ast.getExpression());
@@ -188,6 +212,14 @@ public class AssemblyFrontend {
                 Variable var = getVariable(ast.getIdentifier());
                 if(var.getBytesize() < 8) asm += "    xor rax, rax\n";
                 asm += String.format("    mov %s, %s [var_%d]\n", getSizedRegister("rax", var.getBytesize()), operationSizes.get(var.getBytesize()), var.getId());
+            }
+            case ALLOC -> {
+                AST_Alloc ast = (AST_Alloc) expression;
+                generateExpression(ast.getExpression());
+                asm += """
+                            mov rdi, rax
+                            call alloc
+                        """;
             }
             default -> {
                 System.err.println("[AssemblyFrontend] Unimplemented expression.");

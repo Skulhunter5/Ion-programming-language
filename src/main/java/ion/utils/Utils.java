@@ -67,4 +67,20 @@ public class Utils {
         Files.write(Paths.get(file.getAbsolutePath()), bytes);
     }
 
+    // Internal utils
+
+    public static byte getByteSize(String type) {
+        if(type.endsWith("*")) return 8;
+        switch(type) {
+            case "uint64": return 8;
+            case "uint32": return 4;
+            case "uint16": return 2;
+            case "uint8": return 1;
+            default:
+                System.err.println("[Parser] Unknown bytesize.");
+                System.exit(1);
+                return 0; // Unreachable
+        }
+    }
+
 }

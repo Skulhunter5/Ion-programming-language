@@ -53,12 +53,12 @@ public class Lexer {
     }
 
     private Token parseIdentifier() {
-        String value = "";
-        while(Utils.isAlpha(c) || c == '_' || Utils.isDigit(c)) {
-            value += c;
+        StringBuilder value = new StringBuilder();
+        while(Utils.isAlpha(c) || c == '_' || Utils.isDigit(c) || c == '*') {
+            value.append(c);
             advance();
         }
-        return new Token(TokenType.IDENTIFIER, value);
+        return new Token(TokenType.IDENTIFIER, value.toString());
     }
 
     private Token parseNumber() { // TODO: rework exception handling for multiple dots

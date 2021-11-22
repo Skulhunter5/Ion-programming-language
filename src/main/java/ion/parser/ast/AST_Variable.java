@@ -5,7 +5,7 @@ import ion.parser.ExpressionType;
 
 public class AST_Variable extends AST_Expression {
 
-    private String identifier;
+    private final String identifier;
 
     public AST_Variable(String identifier) {
         super(ExpressionType.VARIABLE_ACCESS);

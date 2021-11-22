@@ -4,6 +4,7 @@ import ion.lexer.Lexer;
 import ion.lexer.Token;
 import ion.lexer.TokenType;
 import ion.parser.ast.*;
+import ion.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -244,6 +245,16 @@ public class Parser {
             useParenthesis = true;
         }
 
+        if(token.getType() == TokenType.IDENTIFIER && token.getValue().equals("alloc")) {
+            eat(); // TokenType.KEYWORD "alloc"
+            if(eatWithFeedback(TokenType.LPAREN)) {
+                System.err.println("[Parser] Expected LPAREN after 'alloc'.");
+                System.exit(1);
+            }
+            expression = new AST_Alloc(parseExpressionConjunction(ExpressionEnd.PARENTHESIS));
+            return expression;
+        }
+
         if(useParenthesis) {
             if(eatWithFeedback(TokenType.RPAREN)) {
                 System.err.println("[Parser] Expected RPAREN to close expression: " + expression);
@@ -285,6 +296,11 @@ public class Parser {
                 String val1 = token.getValue();
                 eat(); // TokenType.IDENTIFIER
                 switch(token.getType()) {
+                    case LBRACK:
+                        eat(); // TokenType.LBRACK
+                        expression = new AST_Array(val1, parseExpressionConjunction(0));
+                        eat(TokenType.RBRACK);
+                        break;
                     case IDENTIFIER:
                         String val2 = token.getValue();
                         eat(); // TokenType.IDENTIFIER
@@ -339,22 +355,9 @@ public class Parser {
             System.exit(1);
         }
 
-        variables.put(identifier, new Variable(type, getByteSize(type), identifier));
+        variables.put(identifier, new Variable(type, Utils.getByteSize(type), identifier));
         if(startValue == null) return new AST_Assignment(identifier, new AST_Integer(0));
         return new AST_Assignment(identifier, startValue);
-    }
-
-    private byte getByteSize(String type) {
-        switch(type) {
-            case "uint64": return 8;
-            case "uint32": return 4;
-            case "uint16": return 2;
-            case "uint8": return 1;
-            default:
-                System.err.println("[Parser] Unknown bytesize.");
-                System.exit(1);
-                return 0; // Unreachable
-        }
     }
 
     // Getters
