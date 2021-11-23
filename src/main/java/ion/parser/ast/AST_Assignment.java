@@ -6,11 +6,19 @@ import ion.parser.ExpressionType;
 
 public class AST_Assignment extends AST_Expression {
 
-    private final String identifier;
-    private final AST_Expression value;
+    protected final String identifier;
+    protected final AST_Expression value;
 
     public AST_Assignment(String identifier, AST_Expression value) {
         super(ExpressionType.ASSIGNMENT);
+
+        this.identifier = identifier;
+        this.value = value;
+    }
+
+    protected AST_Assignment(ExpressionType expressionType, String identifier, AST_Expression value) {
+        super(expressionType);
+
         this.identifier = identifier;
         this.value = value;
     }

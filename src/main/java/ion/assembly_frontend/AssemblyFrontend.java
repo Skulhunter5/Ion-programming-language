@@ -102,13 +102,14 @@ public class AssemblyFrontend {
                     mov r9, 0 ; required: offset=0
                     syscall
                     ret
-                global _start
-                _start:
                 """;
         // Write program
-        generateBlock(parser.getRoot());
+        generateDeclaration(parser.getRoot());
         // Exit
         asm += """
+                global _start
+                _start:
+                    call func_main
                 exit:
                     mov rax, 60
                     mov rdi, 0
@@ -116,6 +117,22 @@ public class AssemblyFrontend {
                 """;
 
         return asm;
+    }
+
+    private void generateDeclaration(AST_Declaration declaration) {
+        for(AST_Function function : declaration.getDeclarations()) {
+            generateFunction(function);
+        }
+    }
+
+    private void generateFunction(AST_Function function) {
+        asm += String.format("func_%s:\n", function.getIdentifier());
+        generateBlock(function.getBody());
+        asm += "    xor rax, rax\n";
+        asm += String.format("func_%s_end:\n", function.getIdentifier());
+        asm += """
+                    ret
+                """;
     }
 
     private void generateBlock(AST_Block block) {
@@ -131,17 +148,25 @@ public class AssemblyFrontend {
 
     private void generateExpression(AST_Expression expression) {
         switch(expression.getExpressionType()) {
+            case FUNCTION_CALL -> {
+                AST_FunctionCall ast = (AST_FunctionCall) expression;
+                if(!parser.functions.contains(ast.getIdentifier())) {
+                    System.err.println("[AssemblyFrontend] Trying to call a not defined function: '" + ast.getIdentifier() + "'");
+                    System.exit(1);
+                }
+                asm += String.format("    call func_%s\n", ast.getIdentifier());
+            }
             case ARRAY_ACCESS -> {
                 AST_Array ast = (AST_Array) expression;
                 Variable var = getVariable(ast.getIdentifier());
-                if(!var.getType().endsWith("*")) {
+                if(!var.getType().endsWith("*")) { // Todo: move into function and check if it can be put somewhere else
                     System.err.println("Array access operator can only be used on pointers.");
                     System.exit(1);
                 }
                 generateExpression(ast.getIndexExpression());
                 asm += String.format("    mov rbx, %d\n", Utils.getByteSize(var.getType().substring(0, var.getType().length() - 1)));
                 asm += "    mul rbx\n";
-                asm += String.format("    add rax, var_%d\n", var.getId());
+                asm += String.format("    add rax, qword [var_%d]\n", var.getId());
                 asm += String.format("    mov %s, %s [rax]\n", getSizedRegister("rax", var.getBytesize()), operationSizes.get(var.getBytesize()));
             }
             case NOT -> {
@@ -206,6 +231,22 @@ public class AssemblyFrontend {
                 Variable var = getVariable(ast.getIdentifier());
                 generateExpression(ast.getValue());
                 asm += String.format("    mov %s [var_%d], %s\n", operationSizes.get(var.getBytesize()), var.getId(), getSizedRegister("rax", var.getBytesize()));
+            }
+            case ASSIGNMENT_ARRAY -> { // TODO: make bytesize variable
+                AST_Assignment_Array ast = (AST_Assignment_Array) expression;
+                Variable var = getVariable(ast.getIdentifier());
+                if(!var.getType().endsWith("*")) { // Todo: move into function and check if it can be put somewhere else
+                    System.err.println("Array access operator can only be used on pointers.");
+                    System.exit(1);
+                }
+                generateExpression(ast.getIndexExpression());
+                asm += String.format("    mov rbx, %d\n", Utils.getByteSize(var.getType().substring(0, var.getType().length() - 1)));
+                asm += "    mul rbx\n";
+                asm += String.format("    add rax, qword [var_%d]\n", var.getId());
+                asm += "    push rax\n";
+                generateExpression(ast.getValue());
+                asm += "    pop rbx\n";
+                asm += String.format("    mov %s [rbx], %s\n", operationSizes.get(var.getBytesize()), getSizedRegister("rax", var.getBytesize()));
             }
             case VARIABLE_ACCESS -> {
                 AST_Variable ast = (AST_Variable) expression;

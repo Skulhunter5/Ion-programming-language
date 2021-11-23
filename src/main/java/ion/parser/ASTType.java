@@ -4,6 +4,8 @@ public enum ASTType {
 
     BLOCK,
     STATEMENT,
-    EXPRESSION;
+    EXPRESSION,
+    DECLARATION,
+    FUNCTION,
 
 }

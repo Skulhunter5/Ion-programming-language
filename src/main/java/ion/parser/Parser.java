@@ -15,8 +15,9 @@ public class Parser {
     private Token token;
     private final ArrayList<Token> peekTokens;
 
-    public AST_Block root; // TODO: implement functions and change root from block to declarationSpace
+    public AST_Declaration root; // TODO: implement functions and change root from block to declarationSpace
     public HashMap<String, Variable> variables;
+    public ArrayList<String> functions;
     public ArrayList<AST_String> strings;
 
     public Parser(Lexer lexer) {
@@ -26,6 +27,7 @@ public class Parser {
 
         strings = new ArrayList<>();
         variables = new HashMap<>();
+        functions = new ArrayList<>();
     }
 
     /**
@@ -86,9 +88,24 @@ public class Parser {
         return peekTokens.get(peekTokens.size() - 1);
     }
 
-    public AST parse() {
-        root = parseBlock(true);
+    public AST_Declaration parse() {
+        root = parseDeclaration();
         return root;
+    }
+
+    public AST_Declaration parseDeclaration() {
+        AST_Declaration declaration = new AST_Declaration();
+        while(token.getType() != TokenType.EOF) declaration.addDeclaration(parseFunction());
+        return declaration;
+    }
+
+    public AST_Function parseFunction() {
+        String val1 = token.getValue();
+        eat(TokenType.IDENTIFIER);
+        eat(TokenType.LPAREN);
+        eat(TokenType.RPAREN);
+        AST_Function function = registerFunction(val1, parseBlock(false));
+        return function;
     }
 
     private AST_Block parseBlock(boolean root) { // Mark: remove the root flag if a declaration becomes the root
@@ -296,10 +313,22 @@ public class Parser {
                 String val1 = token.getValue();
                 eat(); // TokenType.IDENTIFIER
                 switch(token.getType()) {
+                    case LPAREN:
+                        eat(); // TokenType.LPAREN
+                        eat(TokenType.RPAREN);
+                        expression = new AST_FunctionCall(val1);
+                        break;
                     case LBRACK:
                         eat(); // TokenType.LBRACK
-                        expression = new AST_Array(val1, parseExpressionConjunction(0));
+                        AST_Expression indexExpression = parseExpressionConjunction(0);
+                        //expression = new AST_Array(val1, parseExpressionConjunction(0));
                         eat(TokenType.RBRACK);
+                        if(token.getType() == TokenType.ASSIGN) {
+                            eat(); // TokenType.ASSIGN
+                            expression = new AST_Assignment_Array(val1, indexExpression, parseExpressionConjunction(0));
+                        } else {
+                            expression = new AST_Array(val1, indexExpression);
+                        }
                         break;
                     case IDENTIFIER:
                         String val2 = token.getValue();
@@ -360,8 +389,18 @@ public class Parser {
         return new AST_Assignment(identifier, startValue);
     }
 
+    private AST_Function registerFunction(String identifier, AST_Block body) {
+        if(functions.contains(identifier)) {
+            System.err.println("[Parser] Trying to register a function with an already existent identifier.");
+            System.exit(1);
+        }
+
+        functions.add(identifier);
+        return new AST_Function(identifier, body);
+    }
+
     // Getters
-    public AST_Block getRoot() {
+    public AST_Declaration getRoot() {
         return root;
     }
 
