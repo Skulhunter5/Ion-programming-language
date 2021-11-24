@@ -157,7 +157,7 @@ public class AssemblyFrontend {
                 asm += String.format("    call func_%s\n", ast.getIdentifier());
             }
             case ARRAY_ACCESS -> {
-                AST_Array ast = (AST_Array) expression;
+                AST_ArrayAccess ast = (AST_ArrayAccess) expression;
                 Variable var = getVariable(ast.getIdentifier());
                 if(!var.getType().endsWith("*")) { // Todo: move into function and check if it can be put somewhere else
                     System.err.println("Array access operator can only be used on pointers.");

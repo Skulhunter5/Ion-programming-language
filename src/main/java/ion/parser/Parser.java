@@ -327,7 +327,7 @@ public class Parser {
                             eat(); // TokenType.ASSIGN
                             expression = new AST_Assignment_Array(val1, indexExpression, parseExpressionConjunction(0));
                         } else {
-                            expression = new AST_Array(val1, indexExpression);
+                            expression = new AST_ArrayAccess(val1, indexExpression);
                         }
                         break;
                     case IDENTIFIER:
@@ -391,7 +391,7 @@ public class Parser {
 
     private AST_Function registerFunction(String identifier, AST_Block body) {
         if(functions.contains(identifier)) {
-            System.err.println("[Parser] Trying to register a function with an already existent identifier.");
+            System.err.println("[Parser] Trying to redefine a function.");
             System.exit(1);
         }
 

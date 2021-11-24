@@ -3,12 +3,12 @@ package ion.parser.ast;
 import ion.parser.AST_Expression;
 import ion.parser.ExpressionType;
 
-public class AST_Array extends AST_Expression {
+public class AST_ArrayAccess extends AST_Expression {
 
     private final String identifier;
     private final AST_Expression indexExpression;
 
-    public AST_Array(String identifier, AST_Expression indexExpression) {
+    public AST_ArrayAccess(String identifier, AST_Expression indexExpression) {
         super(ExpressionType.ARRAY_ACCESS);
 
         this.identifier = identifier;
