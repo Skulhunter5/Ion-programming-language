@@ -6,6 +6,6 @@ public enum ASTType {
     STATEMENT,
     EXPRESSION,
     DECLARATION,
-    FUNCTION,
+    FUNCTION, GLOBAL_VARIABLE,
 
 }

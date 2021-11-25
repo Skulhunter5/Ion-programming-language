@@ -4,6 +4,7 @@ import ion.lexer.Lexer;
 import ion.lexer.Token;
 import ion.lexer.TokenType;
 import ion.parser.ast.code.*;
+import ion.parser.ast.declaration.AST_Declaration;
 import ion.parser.ast.declaration.AST_Function;
 import ion.utils.Utils;
 
@@ -17,11 +18,10 @@ public class Parser {
     private final ArrayList<Token> peekTokens;
 
     public AST_Declaration root; // TODO: implement functions and change root from block to declarationSpace
-    public HashMap<String, AST_Function> functions;
     public ArrayList<AST_String> strings;
 
-    private HashMap<String, Variable> globalVariables;
-    private ArrayList<Scope> scopes;
+    public HashMap<String, AST_Function> functions;
+    private final HashMap<String, GlobalVariable> globalVariables;
     private Scope currentScope;
 
     public Parser(Lexer lexer) {
@@ -33,7 +33,6 @@ public class Parser {
         functions = new HashMap<>();
 
         globalVariables = new HashMap<>();
-        scopes = new ArrayList<>();
     }
 
     /**
@@ -101,7 +100,10 @@ public class Parser {
 
     public AST_Declaration parseDeclaration() {
         AST_Declaration declaration = new AST_Declaration();
-        while(token.getType() != TokenType.EOF) declaration.addDeclaration(parseFunction());
+        while(token.getType() != TokenType.EOF) {
+            if(peek(1).getType() == TokenType.LPAREN) declaration.addDeclaration(parseFunction());
+            else parseGlobalVariable();
+        }
         return declaration;
     }
 
@@ -111,10 +113,24 @@ public class Parser {
         eat(TokenType.LPAREN);
         eat(TokenType.RPAREN);
         currentScope = new Scope(null);
-        scopes.add(currentScope);
         AST_Function function = registerFunction(val1, parseBlock(), currentScope);
         currentScope = null;
         return function;
+    }
+    
+    public void parseGlobalVariable() {
+        String type = eat(TokenType.IDENTIFIER).getValue();
+        String identifier = eat(TokenType.IDENTIFIER).getValue();
+        if(token.getType() == TokenType.ASSIGN) {
+            eat(); // TokenType.ASSIGN
+            registerGlobalVariable(type, identifier, parseExpressionConjunction(ExpressionEnd.SEMICOLON));
+        } else {
+            if(eatWithFeedback(TokenType.SEMICOLON)) {
+                System.err.println("[Parser] Unexpected token: Was expecting ASSIGN or SEMICOLON, but got " + token);
+                System.exit(1);
+            }
+            registerGlobalVariable(type, identifier, null);
+        }
     }
 
     private AST_Block parseBlock() { // Mark: remove the root flag if a declaration becomes the root
@@ -403,9 +419,20 @@ public class Parser {
         return arguments;
     }
 
+    private void registerGlobalVariable(String type, String identifier, AST_Expression startValue) {
+        if(globalVariables.containsKey(identifier)) {
+            System.err.println("[Parser] Trying to redeclare a variable (global).");
+            System.exit(1);
+        }
+
+        byte bytesize = Utils.getByteSize(type);
+        GlobalVariable var = new GlobalVariable(type, bytesize, identifier, 0, startValue);
+        globalVariables.put(identifier, var);
+    }
+
     private AST_Expression registerVariable(String type, String identifier, AST_Expression startValue) { // Remove AST_VariableDeclaration
         if(isVariableDeclared(identifier, currentScope)) {
-            System.err.println("[Parser] Trying to redeclare a variable.");
+            System.err.println("[Parser] Trying to redeclare a variable (scoped).");
             System.exit(1);
         }
 
@@ -435,7 +462,7 @@ public class Parser {
     // Getters
     public AST_Declaration getRoot() {return root;}
     public Scope getScope() {return currentScope;}
-    public HashMap<String, Variable> getGlobalVariables() {return globalVariables;}
+    public HashMap<String, GlobalVariable> getGlobalVariables() {return globalVariables;}
     public Variable getVariable(String identifier, Scope scope) {
         Variable var = globalVariables.get(identifier);
         if(var == null) var = scope.getVariable(identifier);

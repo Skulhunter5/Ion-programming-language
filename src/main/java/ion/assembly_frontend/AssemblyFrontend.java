@@ -2,6 +2,7 @@ package ion.assembly_frontend;
 
 import ion.parser.*;
 import ion.parser.ast.code.*;
+import ion.parser.ast.declaration.AST_Declaration;
 import ion.parser.ast.declaration.AST_Function;
 import ion.utils.Utils;
 
@@ -59,8 +60,8 @@ public class AssemblyFrontend {
         for(AST_String str : parser.strings) {
             asm += String.format("    str_%d: db %s, 0\n", str.getId(), formatString(str.getValue()));
         }
-        for(Variable var : parser.getGlobalVariables().values()) {
-            asm += String.format("    var_%d: %s %d\n", var.getId(), definitionSizes.get(var.getBytesize()), 0);
+        for(GlobalVariable var : parser.getGlobalVariables().values()) {
+            asm += String.format("    var_%d: %s %d\n", var.getId(), definitionSizes.get(var.getBytesize()), 0); // Optimize: directly set Integer-startvalue in here
         }
         asm += """
                 segment .text
@@ -114,6 +115,12 @@ public class AssemblyFrontend {
         asm += """
                 global _start
                 _start:
+                """;
+        for(GlobalVariable var : parser.getGlobalVariables().values()) {
+            if(var.getStartValue() != null) generateExpression(var.getStartValue(), null);
+            asm += String.format("    mov %s %s, %s\n", operationSizes.get(var.getBytesize()), getVariableAccessString(var), getSizedRegister("rax", var.getBytesize()));
+        }
+        asm += """
                     call func_main
                 exit:
                     mov rax, 60
@@ -168,7 +175,7 @@ public class AssemblyFrontend {
             }
             case ARRAY_ACCESS -> {
                 AST_ArrayAccess ast = (AST_ArrayAccess) expression;
-                Variable var = scope.getVariable(ast.getIdentifier());
+                Variable var = parser.getVariable(ast.getIdentifier(), scope);
                 if(!var.getType().endsWith("*")) { // Todo: move into function and check if it can be put somewhere else
                     System.err.println("Array access operator can only be used on pointers.");
                     System.exit(1);
@@ -218,7 +225,7 @@ public class AssemblyFrontend {
             }
             case DECREMENT -> {
                 AST_Decrement ast = (AST_Decrement) expression;
-                Variable var = scope.getVariable(ast.getIdentifier());
+                Variable var = parser.getVariable(ast.getIdentifier(), scope);
                 String reg = getSizedRegister("rax", var.getBytesize());
                 String opSize = operationSizes.get(var.getBytesize());
                 if(var.getBytesize() < 8) asm += "    xor rax, rax\n";
@@ -228,7 +235,7 @@ public class AssemblyFrontend {
             }
             case INCREMENT -> {
                 AST_Increment ast = (AST_Increment) expression;
-                Variable var = scope.getVariable(ast.getIdentifier());
+                Variable var = parser.getVariable(ast.getIdentifier(), scope);
                 String reg = getSizedRegister("rax", var.getBytesize());
                 String variableAccessString = getVariableAccessString(var);
                 String opSize = operationSizes.get(var.getBytesize());
@@ -239,13 +246,13 @@ public class AssemblyFrontend {
             }
             case ASSIGNMENT -> { // TODO: make bytesize variable
                 AST_Assignment ast = (AST_Assignment) expression;
-                Variable var = scope.getVariable(ast.getIdentifier());
+                Variable var = parser.getVariable(ast.getIdentifier(), scope);
                 generateExpression(ast.getValue(), scope);
                 asm += String.format("    mov %s %s, %s\n", operationSizes.get(var.getBytesize()), getVariableAccessString(var), getSizedRegister("rax", var.getBytesize()));
             }
             case ASSIGNMENT_ARRAY -> { // TODO: make bytesize variable
                 AST_Assignment_Array ast = (AST_Assignment_Array) expression;
-                Variable var = scope.getVariable(ast.getIdentifier());
+                Variable var = parser.getVariable(ast.getIdentifier(), scope);
                 if(!var.getType().endsWith("*")) { // Todo: move into function and check if it can be put somewhere else
                     System.err.println("Array access operator can only be used on pointers.");
                     System.exit(1);
@@ -432,7 +439,7 @@ public class AssemblyFrontend {
     }
 
     public String getVariableAccessString(Variable var) {
-        if(parser.getGlobalVariables().containsKey(var.getIdentifier())) {
+        if(var instanceof GlobalVariable) {
             return String.format("[var_%d]", var.getId());
         }
         return String.format("[rbp - %d]", var.getOffset());

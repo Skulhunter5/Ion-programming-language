@@ -1,5 +1,7 @@
-package ion.parser;
+package ion.parser.ast.declaration;
 
+import ion.parser.AST;
+import ion.parser.ASTType;
 import ion.parser.ast.declaration.AST_Function;
 
 import java.util.ArrayList;
@@ -14,8 +16,7 @@ public class AST_Declaration extends AST {
     }
 
     // Getters
-    public void addDeclaration(AST_Function child) {
-        declarations.add(child);}
+    public void addDeclaration(AST_Function child) {declarations.add(child);}
     public ArrayList<AST_Function> getDeclarations() {return declarations;}
 
     // Print
