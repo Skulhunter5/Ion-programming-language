@@ -1,9 +1,6 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
-import ion.parser.AST;
-import ion.parser.AST_Expression;
-import ion.parser.AST_Statement;
-import ion.parser.StatementType;
+import ion.parser.*;
 
 public class AST_DoWhile extends AST_Statement {
 
@@ -13,8 +10,8 @@ public class AST_DoWhile extends AST_Statement {
     private final AST_Expression condition;
     private final AST_Block block;
 
-    public AST_DoWhile(AST_Expression condition, AST_Block block) {
-        super(StatementType.DO_WHILE);
+    public AST_DoWhile(AST_Expression condition, AST_Block block, Scope scope) {
+        super(StatementType.DO_WHILE, scope);
         this.id = AST_DoWhile.nextId++;
 
         this.condition = condition;

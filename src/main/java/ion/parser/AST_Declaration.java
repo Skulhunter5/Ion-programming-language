@@ -1,5 +1,7 @@
 package ion.parser;
 
+import ion.parser.ast.declaration.AST_Function;
+
 import java.util.ArrayList;
 
 public class AST_Declaration extends AST {
@@ -26,7 +28,7 @@ public class AST_Declaration extends AST {
         String res = super.readableString() + " declarations=[\n";
         for(AST_Function declaration : declarations) res += AST.indent(declaration) + ",\n";
         res = res.substring(0, res.length() - 2);
-        res += "\n>";
+        res += "]\n>";
         return res;
     }
 

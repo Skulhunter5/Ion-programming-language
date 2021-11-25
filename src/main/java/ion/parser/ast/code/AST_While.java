@@ -1,9 +1,6 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
-import ion.parser.AST;
-import ion.parser.AST_Expression;
-import ion.parser.AST_Statement;
-import ion.parser.StatementType;
+import ion.parser.*;
 
 public class AST_While extends AST_Statement {
 
@@ -13,8 +10,8 @@ public class AST_While extends AST_Statement {
     private AST_Expression condition;
     private AST_Block block;
 
-    public AST_While(AST_Expression condition, AST_Block block) {
-        super(StatementType.WHILE);
+    public AST_While(AST_Expression condition, AST_Block block, Scope scope) {
+        super(StatementType.WHILE, scope);
         this.id = AST_While.nextId++;
 
         this.condition = condition;

@@ -1,4 +1,4 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
 import ion.parser.AST;
 import ion.parser.AST_Expression;

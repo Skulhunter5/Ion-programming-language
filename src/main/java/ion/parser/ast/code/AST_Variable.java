@@ -1,28 +1,29 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
 import ion.parser.AST_Expression;
 import ion.parser.ExpressionType;
 
-public class AST_FunctionCall extends AST_Expression {
+public class AST_Variable extends AST_Expression {
 
     private final String identifier;
 
-    public AST_FunctionCall(String identifier) {
-        super(ExpressionType.FUNCTION_CALL);
+    public AST_Variable(String identifier) {
+        super(ExpressionType.VARIABLE_ACCESS);
 
         this.identifier = identifier;
     }
 
-    // Getter and Setters
+    // Getters
     public String getIdentifier() {return identifier;}
 
     // Print
     @Override
     public String toString() {
-        return super.toString() + " identifer='" + identifier + "'>";
+        return super.toString() + " identifier='" + identifier + "'>";
     }
     @Override
     public String readableString() {
         return super.toString() + "\n\tidentifier='" + identifier + "'\n>";
     }
+
 }

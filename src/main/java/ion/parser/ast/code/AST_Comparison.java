@@ -1,4 +1,4 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
 import ion.lexer.TokenType;
 import ion.parser.AST;

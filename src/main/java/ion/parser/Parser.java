@@ -3,7 +3,8 @@ package ion.parser;
 import ion.lexer.Lexer;
 import ion.lexer.Token;
 import ion.lexer.TokenType;
-import ion.parser.ast.*;
+import ion.parser.ast.code.*;
+import ion.parser.ast.declaration.AST_Function;
 import ion.utils.Utils;
 
 import java.util.ArrayList;
@@ -16,9 +17,12 @@ public class Parser {
     private final ArrayList<Token> peekTokens;
 
     public AST_Declaration root; // TODO: implement functions and change root from block to declarationSpace
-    public HashMap<String, Variable> variables;
-    public ArrayList<String> functions;
+    public HashMap<String, AST_Function> functions;
     public ArrayList<AST_String> strings;
+
+    private HashMap<String, Variable> globalVariables;
+    private ArrayList<Scope> scopes;
+    private Scope currentScope;
 
     public Parser(Lexer lexer) {
         this.lexer = lexer;
@@ -26,8 +30,10 @@ public class Parser {
         token = lexer.nextToken();
 
         strings = new ArrayList<>();
-        variables = new HashMap<>();
-        functions = new ArrayList<>();
+        functions = new HashMap<>();
+
+        globalVariables = new HashMap<>();
+        scopes = new ArrayList<>();
     }
 
     /**
@@ -104,30 +110,36 @@ public class Parser {
         eat(TokenType.IDENTIFIER);
         eat(TokenType.LPAREN);
         eat(TokenType.RPAREN);
-        AST_Function function = registerFunction(val1, parseBlock(false));
+        currentScope = new Scope(null);
+        scopes.add(currentScope);
+        AST_Function function = registerFunction(val1, parseBlock(), currentScope);
+        currentScope = null;
         return function;
     }
 
-    private AST_Block parseBlock(boolean root) { // Mark: remove the root flag if a declaration becomes the root
+    private AST_Block parseBlock() { // Mark: remove the root flag if a declaration becomes the root
         AST_Block block = new AST_Block();
-        if(token.getType() != TokenType.LBRACE && !root) {
+        if(token.getType() != TokenType.LBRACE) {
             AST ast = parseStatement();
             if(ast != null) block.addChild(ast);
             return block;
         }
-        if(!root || token.getType() == TokenType.LBRACE) eat(); // TokenType.LBRACE
 
+        eat(TokenType.LBRACE); // TokenType.LBRACE
         while(token.getType() != TokenType.RBRACE && token.getType() != TokenType.EOF) {
             AST ast = parseStatement();
             if(ast != null) block.addChild(ast);
         }
-        if(!root || token.getType() == TokenType.RBRACE) eat(TokenType.RBRACE);
+        eat(TokenType.RBRACE);
 
         return block;
     }
 
     private AST parseStatement() {
         if(token.getType() == TokenType.KEYWORD) {
+            AST_Statement statement = null;
+            Scope oldScope = currentScope;
+            currentScope = new Scope(oldScope);
             switch(token.getValue()) {
                 case "if" -> {
                     eat(); // TokenType.KEYWORD "if"
@@ -140,13 +152,13 @@ public class Parser {
                         System.err.println("[Parser] Expected RPAREN to close condition block of if-statement, instead got: " + token);
                         System.exit(1);
                     }
-                    AST_Block ifBlock = parseBlock(false);
+                    AST_Block ifBlock = parseBlock();
                     AST_Block elseBlock = null;
                     if(token.getType() == TokenType.KEYWORD && token.getValue().equals("else")) {
                         eat(); // TokenType.KEYWORD "else"
-                        elseBlock = parseBlock(false);
+                        elseBlock = parseBlock();
                     }
-                    return new AST_If(condition, ifBlock, elseBlock);
+                    statement = new AST_If(condition, ifBlock, elseBlock, currentScope);
                 }
                 case "while" -> {
                     eat(); // TokenType.KEYWORD "while"
@@ -159,12 +171,12 @@ public class Parser {
                         System.err.println("[Parser] Expected RPAREN to close condition block of while-statement, instead got: " + token);
                         System.exit(1);
                     }
-                    AST_Block block = parseBlock(false);
-                    return new AST_While(condition, block);
+                    AST_Block block = parseBlock();
+                    statement = new AST_While(condition, block, currentScope);
                 }
                 case "do" -> {
                     eat(); // TokenType.KEYWORD "do"
-                    AST_Block block = parseBlock(false);
+                    AST_Block block = parseBlock();
                     String val = eat(TokenType.KEYWORD).getValue();
                     if(!val.equals("while")) {
                         System.err.println("[Parser] Expected 'while' keyword after block of do-statement, instead got: '" + token + "'");
@@ -183,7 +195,7 @@ public class Parser {
                         System.err.println("[Parser] Expected SEMICOLON after do-while-statement, instead got: " + token);
                         System.exit(1);
                     }
-                    return new AST_DoWhile(condition, block);
+                    return new AST_DoWhile(condition, block, currentScope);
                 }
                 case "print" -> {
                     eat(); // TokenType.KEYWORD "print"
@@ -192,19 +204,16 @@ public class Parser {
                         System.err.println("[Parser] Expected SEMICOLON after print-statement, instead got: " + token);
                         System.exit(1);
                     }
-                    return new AST_Print(expression);
+                    return new AST_Print(expression, currentScope);
                 }
                 default -> {
-                    System.err.println("[Parser]: Invalid keyword: " + token.getValue());
+                    System.err.println("[Parser] Invalid keyword: " + token.getValue());
                     System.exit(1);
                 }
             }
+            currentScope = oldScope;
+            return statement;
         } else return parseExpressionConjunction(ExpressionEnd.SEMICOLON);
-
-        // Should be unreachable
-        System.err.println("[Parser]: Unreachable");
-        System.exit(1);
-        return null; // Unreachable
     }
 
     private static final TokenType[] conjunctions = new TokenType[]{
@@ -315,8 +324,9 @@ public class Parser {
                 switch(token.getType()) {
                     case LPAREN:
                         eat(); // TokenType.LPAREN
+                        ArrayList<AST_Expression> arguments = parseCallArguments();
                         eat(TokenType.RPAREN);
-                        expression = new AST_FunctionCall(val1);
+                        expression = new AST_FunctionCall(val1, arguments);
                         break;
                     case LBRACK:
                         eat(); // TokenType.LBRACK
@@ -355,6 +365,10 @@ public class Parser {
                         expression = new AST_Increment(val1, true);
                         break;
                     default:
+                        if(!isVariableDeclared(val1, currentScope)) {
+                            System.err.println("[Parser] Trying to access an undeclared variable: '" + val1 + "'");
+                            System.exit(1);
+                        }
                         expression = new AST_Variable(val1);
                 }
                 break;
@@ -378,30 +392,54 @@ public class Parser {
         return expression;
     }
 
+    private ArrayList<AST_Expression> parseCallArguments() {
+        ArrayList<AST_Expression> arguments = new ArrayList<>();
+
+        while(token.getType() != TokenType.RPAREN) {
+            arguments.add(parseExpressionConjunction(0));
+            if(token.getType() != TokenType.RPAREN) eat(TokenType.COMMA);
+        }
+
+        return arguments;
+    }
+
     private AST_Expression registerVariable(String type, String identifier, AST_Expression startValue) { // Remove AST_VariableDeclaration
-        if(variables.containsKey(identifier)) {
-            System.err.println("[Parser] Trying to register a variable with an already existent identifier.");
+        if(isVariableDeclared(identifier, currentScope)) {
+            System.err.println("[Parser] Trying to redeclare a variable.");
             System.exit(1);
         }
 
-        variables.put(identifier, new Variable(type, Utils.getByteSize(type), identifier));
+        byte bytesize = Utils.getByteSize(type);
+        currentScope.addVariable(new Variable(type, bytesize, identifier, currentScope.getTotalOffset() + bytesize));
         if(startValue == null) return new AST_Assignment(identifier, new AST_Integer(0));
         return new AST_Assignment(identifier, startValue);
     }
 
-    private AST_Function registerFunction(String identifier, AST_Block body) {
-        if(functions.contains(identifier)) {
+    private AST_Function registerFunction(String identifier, AST_Block body, Scope scope) {
+        if(functions.containsKey(identifier)) {
             System.err.println("[Parser] Trying to redefine a function.");
             System.exit(1);
         }
 
-        functions.add(identifier);
-        return new AST_Function(identifier, body);
+        AST_Function function = new AST_Function(identifier, scope, body);
+        functions.put(identifier, function);
+        return function;
+    }
+
+    private boolean isVariableDeclared(String identifier, Scope scope) {
+        boolean isDeclared = globalVariables.containsKey(identifier);
+        if(!isDeclared) isDeclared = scope.isVariableDeclared(identifier);
+        return isDeclared;
     }
 
     // Getters
-    public AST_Declaration getRoot() {
-        return root;
+    public AST_Declaration getRoot() {return root;}
+    public Scope getScope() {return currentScope;}
+    public HashMap<String, Variable> getGlobalVariables() {return globalVariables;}
+    public Variable getVariable(String identifier, Scope scope) {
+        Variable var = globalVariables.get(identifier);
+        if(var == null) var = scope.getVariable(identifier);
+        return var;
     }
 
 }

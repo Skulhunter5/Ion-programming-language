@@ -1,9 +1,6 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
-import ion.parser.AST;
-import ion.parser.AST_Expression;
-import ion.parser.AST_Statement;
-import ion.parser.StatementType;
+import ion.parser.*;
 
 public class AST_If extends AST_Statement {
 
@@ -14,8 +11,8 @@ public class AST_If extends AST_Statement {
     private final AST_Block ifBlock;
     private final AST_Block elseBlock;
 
-    public AST_If(AST_Expression condition, AST_Block ifBlock, AST_Block elseBlock) {
-        super(StatementType.IF);
+    public AST_If(AST_Expression condition, AST_Block ifBlock, AST_Block elseBlock, Scope scope) {
+        super(StatementType.IF, scope);
         this.id = AST_If.nextId++;
 
         this.condition = condition;

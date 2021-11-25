@@ -1,4 +1,4 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
 import ion.parser.AST;
 import ion.parser.ASTType;
@@ -28,7 +28,7 @@ public class AST_Block extends AST {
         String res = super.readableString() + " children=[\n";
         for(AST child : children) res += AST.indent(child) + ",\n";
         res = res.substring(0, res.length() - 2);
-        res += "\n>";
+        res += "]\n>";
         return res;
     }
 

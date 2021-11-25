@@ -1,19 +1,19 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
 import ion.parser.AST_Expression;
 import ion.parser.ExpressionType;
 
-public class AST_Float extends AST_Expression {
+public class AST_Integer extends AST_Expression {
 
-    private final float value;
+    private final long value;
 
-    public AST_Float(float value) {
-        super(ExpressionType.FLOAT);
+    public AST_Integer(long value) {
+        super(ExpressionType.INTEGER);
         this.value = value;
     }
 
     // Getters
-    public float getValue() {return value;}
+    public long getValue() {return value;}
 
     // Print
     @Override

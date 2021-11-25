@@ -1,16 +1,13 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
-import ion.parser.AST;
-import ion.parser.AST_Expression;
-import ion.parser.AST_Statement;
-import ion.parser.StatementType;
+import ion.parser.*;
 
-public class AST_Print extends AST_Statement { // TODO: make print a statement instead of an expression
+public class AST_Alloc extends AST_Expression { // TODO: make print a statement instead of an expression
 
     private final AST_Expression expression;
 
-    public AST_Print(AST_Expression expression) {
-        super(StatementType.PRINT);
+    public AST_Alloc(AST_Expression expression) {
+        super(ExpressionType.ALLOC);
 
         this.expression = expression;
     }

@@ -1,18 +1,20 @@
-package ion.parser.ast;
+package ion.parser.ast.code;
 
-import ion.parser.*;
+import ion.parser.AST;
+import ion.parser.AST_Expression;
+import ion.parser.ExpressionType;
 
-public class AST_Alloc extends AST_Expression { // TODO: make print a statement instead of an expression
+public class AST_Not extends AST_Expression {
 
     private final AST_Expression expression;
 
-    public AST_Alloc(AST_Expression expression) {
-        super(ExpressionType.ALLOC);
+    public AST_Not(AST_Expression expression) {
+        super(ExpressionType.NOT);
 
         this.expression = expression;
     }
 
-    // Getters
+    // Getters and Setters
     public AST_Expression getExpression() {return expression;}
 
     // Print
