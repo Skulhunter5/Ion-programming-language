@@ -1,2 +1,2 @@
-# Ion - programming language
+# Ion
  
